@@ -1,15 +1,461 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Contador táctil</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Gregorio</title>
+  <link id="favicon-gregorio" rel="icon" type="image/png" href="assets/images/Gregorio%20feliz.png">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
 </head>
 <body>
-  <main id="touch-area">
-    <span id="counter">0</span>
+
+  <main class="celular" id="app-gregorio">
+
+    <!-- 1. PANTALLA DE INICIO -->
+    <section id="pantalla-inicio" class="pantalla activa">
+      <div class="fondo-inicio" onclick="tocarGregorioInicio()">
+        <img
+          src="assets/images/bienvenida.png.jpg"
+          alt="Gregorio"
+          class="imagen-bienvenida"
+          id="img-gregorio-inicio"
+          draggable="false"
+        >
+
+        <div class="panel-acciones-inicio" onclick="event.stopPropagation()">
+          <button
+            type="button"
+            class="btn-audio-inicio"
+            data-audio-btn
+            data-texto-normal="🔊 Escucha a Gregorio"
+            data-texto-pausar="⏸ Pausar audio"
+            onclick="reproducirAudioInicio(this)"
+          >
+            🔊 Escucha a Gregorio
+          </button>
+
+          <button type="button" id="btn-comenzar" class="btn-empezar-estilo" onclick="irA('pantalla-menu')">
+            Comenzar
+          </button>
+
+          <button type="button" class="btn-mediacion-adultos" onclick="abrirModalMediacion()">
+            Adultos y mediación
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MENÚ ÚNICO (3 opciones esenciales) -->
+    <section id="pantalla-menu" class="pantalla seccion-menu">
+      <div class="barra-sonido-superior">
+        <button
+          type="button"
+          class="btn-toggle-sonido-global"
+          data-toggle-sonido-global
+          onclick="toggleSonidoGlobalUI()"
+          title="Activar o silenciar todos los sonidos"
+        >
+          🔊 Sonidos activos
+        </button>
+      </div>
+
+      <div class="encabezado-menu-unico">
+        <img
+          src="assets/images/Gregorio feliz.png"
+          alt="Gregorio"
+          class="avatar-menu-grande"
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+        <h2 class="titulo-multicolor-grande">
+          <span class="c1">¿</span><span class="c2">Q</span><span class="c3">U</span><span class="c4">É</span> <span class="c5">H</span><span class="c6">A</span><span class="c1">C</span><span class="c2">E</span><span class="c3">M</span><span class="c4">O</span><span class="c5">S</span> <span class="c6">H</span><span class="c1">O</span><span class="c2">Y</span><span class="c3">?</span>
+        </h2>
+      </div>
+
+      <div class="lista-menu-principal">
+        <button type="button" class="tarjeta-menu-opcion opcion-sentir" onclick="irA('pantalla-emociones')">
+          <span class="icono-opcion">💛</span>
+          <span class="texto-opcion">¿Cómo te sientes hoy?</span>
+        </button>
+
+        <button type="button" class="tarjeta-menu-opcion opcion-juegos" onclick="abrirPantallaVideojuegos()">
+          <span class="icono-opcion">🕹️</span>
+          <span class="texto-opcion">Juegos para las emociones</span>
+        </button>
+
+        <button type="button" class="tarjeta-menu-opcion opcion-fotos" onclick="abrirPantallaCamara()">
+          <span class="icono-opcion">📷</span>
+          <span class="texto-opcion">Fotos emocionales</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn-volver-unico" onclick="irA('pantalla-inicio')">
+        ⬅ Volver
+      </button>
+    </section>
+
+    <!-- 3. ¿CÓMO TE SIENTES HOY? -->
+    <section id="pantalla-emociones" class="pantalla seccion-emociones">
+      <h2 class="titulo-multicolor-grande">
+        <span class="c1">¿</span><span class="c2">C</span><span class="c3">Ó</span><span class="c4">M</span><span class="c5">O</span> <span class="c6">T</span><span class="c1">E</span>
+        <span class="c2">S</span><span class="c3">I</span><span class="c4">E</span><span class="c5">N</span><span class="c6">T</span><span class="c1">E</span><span class="c2">S</span> <span class="c3">H</span><span class="c4">O</span><span class="c5">Y</span><span class="c6">?</span>
+      </h2>
+
+      <div class="cuadricula-marcos-magicos">
+        <button type="button" class="tarjeta-emocion-magica emo-tristeza" onclick="seleccionarEmocion('triste', 'Triste')">
+          <div class="interior-tarjeta-emocion">
+            <img src="assets/images/Gregorio triste.png" alt="Triste" class="emoji-individual" draggable="false">
+          </div>
+          <span class="etiqueta-emocion-magica">TRISTE</span>
+        </button>
+
+        <button type="button" class="tarjeta-emocion-magica emo-rabia" onclick="seleccionarEmocion('bravo', 'Bravo')">
+          <div class="interior-tarjeta-emocion">
+            <img src="assets/images/Gregorio furioso.png" alt="Bravo" class="emoji-individual" draggable="false">
+          </div>
+          <span class="etiqueta-emocion-magica">BRAVO</span>
+        </button>
+
+        <button type="button" class="tarjeta-emocion-magica emo-alegria" onclick="seleccionarEmocion('alegre', 'Alegre')">
+          <div class="interior-tarjeta-emocion">
+            <img src="assets/images/Gregorio feliz.png" alt="Alegre" class="emoji-individual" draggable="false">
+          </div>
+          <span class="etiqueta-emocion-magica">ALEGRE</span>
+        </button>
+
+        <button type="button" class="tarjeta-emocion-magica emo-miedo" onclick="seleccionarEmocion('asustado', 'Asustado')">
+          <div class="interior-tarjeta-emocion">
+            <img src="assets/images/Gregorio asustado.png" alt="Asustado" class="emoji-individual" draggable="false">
+          </div>
+          <span class="etiqueta-emocion-magica">ASUSTADO</span>
+        </button>
+
+        <button type="button" class="tarjeta-emocion-magica emo-asco span-centro" onclick="seleccionarEmocion('desagrado', 'Asco')">
+          <div class="interior-tarjeta-emocion">
+            <img src="assets/images/Gregorio desagrado.png" alt="Asco" class="emoji-individual" draggable="false">
+          </div>
+          <span class="etiqueta-emocion-magica">ASCO</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn-volver-unico" onclick="irA('pantalla-menu')">
+        ⬅ Volver
+      </button>
+    </section>
+
+    <!-- 4. INTENSIDAD (1 A 3 DEDOS) -->
+    <section id="pantalla-dedos" class="pantalla seccion-dedos">
+      <div class="header-bosque">
+        <div class="fila-superior-dedos">
+          <span id="badge-emocion" class="pildora-emocion-clara">TRISTE</span>
+          <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirInstruccionDedos(this)" title="Escuchar a Gregorio">
+            🔊
+          </button>
+        </div>
+        <h2 class="titulo-bosque-grande-claro">
+          <span class="c1">¿</span><span class="c2">Q</span><span class="c3">U</span><span class="c4">É</span> <span class="c5">T</span><span class="c6">A</span><span class="c1">N</span> <span class="c2">G</span><span class="c3">R</span><span class="c4">A</span><span class="c5">N</span><span class="c6">D</span><span class="c1">E</span> <span class="c2">E</span><span class="c3">S</span><span class="c4">?</span>
+        </h2>
+        <p class="subguia-dedos" id="subguia-como-poner-dedos">
+          Pon 1, 2 o 3 dedos en el caminito
+        </p>
+      </div>
+
+      <div class="medidor-intensidad-dedos">
+        <div class="orbe-magico-contador-claro" id="orbe-contador-dedos">
+          <span id="numero-dedos">?</span>
+        </div>
+
+        <div class="tarjeta-cara-intensidad" id="tarjeta-cara-intensidad">
+          <img
+            id="img-cara-intensidad"
+            src="assets/images/Gregorio triste.png"
+            alt="Carita de Gregorio según intensidad"
+            class="img-cara-intensidad nivel-1"
+            draggable="false"
+          >
+          <span id="etiqueta-intensidad-dedos" class="etiqueta-intensidad-dedos">
+            1 dedo = un poco triste · 2 = medianamente triste · 3 = muy triste
+          </span>
+        </div>
+      </div>
+
+      <div id="zona-tactil" class="zona-caminito-claro">
+        <div class="sendero-musgo-claro"></div>
+        <div class="contenedor-huellas-camino" id="huellas-camino"></div>
+      </div>
+
+      <button type="button" class="btn-volver-unico" onclick="irA('pantalla-emociones')">
+        ⬅ Volver
+      </button>
+    </section>
+
+    <!-- 5. RITUAL ESTILO REPRODUCTOR PROPIO -->
+    <section id="pantalla-ritual" class="pantalla seccion-ritual pantalla-spotify">
+      <div class="caratula-elefante-grande">
+        <img
+          src="assets/images/Ritual 1 tristeza.jpg"
+          alt="Gregorio en el ritual"
+          class="imagen-ritual-activa"
+          id="img-ritual-gregorio"
+          draggable="false"
+          onerror="this.src='assets/images/Gregorio triste.png'"
+        >
+      </div>
+
+      <div class="info-ritual-estilo-player">
+        <div class="fila-meta-ritual">
+          <span class="pildora-ritual" id="badge-ritual-emocion">TRISTE</span>
+          <span class="estado-audio-pill" id="estado-audio-futuro">En pausa</span>
+        </div>
+        <h3 class="titulo-ritual-actual" id="titulo-ritual-actual">La caricia de Gregorio</h3>
+        <p class="texto-guia-fisico-externo-claro" id="descripcion-ritual-fisico">
+          Pon tu manito con la palma hacia arriba y acaricia tu pulgar suavemente desde la base hasta la punta.
+        </p>
+      </div>
+
+      <div class="reproductor-musica-card">
+        <div class="barra-tiempo-wrapper" onclick="buscarPosicionAudio(event)">
+          <div class="barra-tiempo-fondo">
+            <div class="barra-tiempo-relleno" id="barra-tiempo-audio" style="width: 0%;"></div>
+          </div>
+          <div class="tiempos-audio">
+            <span id="tiempo-actual-audio">0:00</span>
+            <span id="tiempo-total-audio">0:30</span>
+          </div>
+        </div>
+
+        <div class="controles-player-fila">
+          <button type="button" class="btn-control-player" onclick="retrocederAudio()" title="Retroceder 5 segundos">
+            ⏮
+          </button>
+          <button type="button" id="btn-play" class="btn-play-verde-claro" onclick="toggleAudioPropio()" title="Reproducir o pausar">
+            ▶
+          </button>
+          <button type="button" class="btn-control-player" onclick="adelantarAudio()" title="Adelantar 5 segundos">
+            ⏭
+          </button>
+          <button type="button" class="btn-ficha-adulto" onclick="abrirModalFicha()" title="Guía y guion">
+            📋
+          </button>
+        </div>
+      </div>
+
+      <audio id="mi-audio-gregorio" preload="auto"></audio>
+
+      <button type="button" class="btn-volver-unico" onclick="irA('pantalla-menu')">
+        ⬅ Volver
+      </button>
+    </section>
+
+    <!-- 6. JUEGOS PARA LAS EMOCIONES -->
+    <section id="pantalla-videojuegos" class="pantalla seccion-juegos">
+      <div id="tarjeta-intro-juegos" class="tarjeta-intro-seccion oculto">
+        <h3 class="titulo-intro-seccion">Juegos para las emociones</h3>
+        <img
+          src="assets/images/Gregorio consejo juegos.jpg"
+          alt="Gregorio dando consejos de juegos"
+          class="imagen-intro-seccion"
+          draggable="false"
+          onerror="this.src='assets/images/Gregorio feliz.png'"
+        >
+        <p class="texto-intro-seccion">
+          ¡Juguemos con Gregorio y escuchemos los sonidos de cada momento!
+        </p>
+        <div class="acciones-intro-seccion">
+          <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirIntroJuegos(this)" title="Escuchar a Gregorio">
+            🔊
+          </button>
+          <button type="button" class="btn-empezar-estilo" onclick="ocultarIntroJuegos()">
+            ¡Vamos a jugar!
+          </button>
+        </div>
+      </div>
+
+      <div class="hud-arcade-superior">
+        <div class="medidor-animo-arcade" title="Progreso">
+          <span>⚡</span>
+          <div class="barra-arcade-fondo">
+            <div class="barra-arcade-relleno" id="barra-animo-gregorio" style="width: 0%;"></div>
+          </div>
+          <span class="porcentaje-mision" id="texto-porcentaje-mision">0%</span>
+        </div>
+        <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirAudioJuegoActual(this)" title="Escuchar a Gregorio">
+          🔊
+        </button>
+        <button type="button" class="btn-ayuda-mini" onclick="mostrarAyudaPantalla('juegos')" title="Guía">?</button>
+      </div>
+
+      <p class="instruccion-juego-destacada" id="guia-juego-dedos">
+        Desliza en el cuerpo de Gregorio para echarle cremita.
+      </p>
+
+      <div class="marco-visor-arcade">
+        <canvas id="canvas-juego-dedos" width="325" height="310"></canvas>
+        <div class="burbuja-arcade-mensaje" id="mensaje-pou-gregorio">
+          Cuando estás triste puedes ponerte cremita suave en el spa.
+        </div>
+      </div>
+
+      <div class="selector-emociones-juego">
+        <button type="button" class="arcade-btn" data-juego="ducha" onclick="seleccionarMinijuego('ducha', this)">
+          <span>🚿</span>
+          <small>Asco</small>
+        </button>
+        <button type="button" class="arcade-btn" data-juego="casita" onclick="seleccionarMinijuego('casita', this)">
+          <span>🏠</span>
+          <small>Bravo</small>
+        </button>
+        <button type="button" class="arcade-btn" data-juego="burbujas" onclick="seleccionarMinijuego('burbujas', this)">
+          <span>🫧</span>
+          <small>Alegre</small>
+        </button>
+        <button type="button" class="arcade-btn activo" data-juego="caricia" onclick="seleccionarMinijuego('caricia', this)">
+          <span>🌿</span>
+          <small>Triste</small>
+        </button>
+        <button type="button" class="arcade-btn" data-juego="ritmo" onclick="seleccionarMinijuego('ritmo', this)">
+          <span>🎵</span>
+          <small>Asustado</small>
+        </button>
+      </div>
+
+      <button type="button" class="btn-volver-unico" onclick="irA('pantalla-menu')">
+        ⬅ Volver
+      </button>
+    </section>
+
+    <!-- 7. FOTOS EMOCIONALES -->
+    <section id="pantalla-camara" class="pantalla seccion-camara">
+      <div id="tarjeta-intro-fotos" class="tarjeta-intro-seccion oculto">
+        <h3 class="titulo-intro-seccion">¡Reto de las fotos!</h3>
+        <img
+          src="assets/images/Gregorio fotografo.jpg"
+          alt="Gregorio fotógrafo"
+          class="imagen-intro-seccion"
+          draggable="false"
+          onerror="this.src='assets/images/Gregorio feliz.png'"
+        >
+        <p class="texto-intro-seccion">
+          ¡Imitemos las caritas de Gregorio frente a la cámara!
+        </p>
+        <div class="acciones-intro-seccion">
+          <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirIntroFotos(this)" title="Escuchar a Gregorio">
+            🔊
+          </button>
+          <button type="button" class="btn-empezar-estilo" onclick="ocultarIntroFotos()">
+            ¡Abrir cámara!
+          </button>
+        </div>
+      </div>
+
+      <div class="fila-superior-camara">
+        <p class="estado-camara" id="estado-camara-texto">Imita su carita alegre</p>
+        <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirAudioFotoActual(this)" title="Escuchar a Gregorio">
+          🔊
+        </button>
+      </div>
+
+      <div class="visor-camara-marco">
+        <video id="video-camara-elefante" autoplay playsinline muted style="display:none;"></video>
+        <canvas id="canvas-camara-elefante" width="325" height="295"></canvas>
+
+        <div id="circulo-guia-gregorio" class="circulo-guia-gregorio grande" onclick="alternarTamanoGuiaGregorio()" title="Toca para cambiar tamaño">
+          <img id="img-guia-gregorio-circulo" src="assets/images/Gregorio feliz.png" alt="Gregorio para imitar" draggable="false">
+          <span id="etiqueta-guia-gregorio" class="etiqueta-guia-gregorio">ALEGRE</span>
+        </div>
+
+        <div id="panel-foto-capturada" class="panel-foto-capturada oculto">
+          <div class="marco-foto-con-logo">
+            <img
+              id="img-foto-tomada"
+              alt="Foto capturada"
+              title="Toca para descargar"
+              draggable="false"
+              onclick="descargarFotoElefante()"
+            >
+            <div id="logo-gregorio-foto-capturada" class="circulo-guia-gregorio grande logo-en-captura">
+              <img id="img-logo-foto-capturada" src="assets/images/Gregorio feliz.png" alt="Gregorio" draggable="false">
+              <span id="etiqueta-logo-foto-capturada" class="etiqueta-guia-gregorio">ALEGRE</span>
+            </div>
+          </div>
+
+          <div class="acciones-foto-tomada">
+            <a id="enlace-descarga-foto" class="btn-guardar-foto" href="#" download="gregorio-foto.png">⬇ Descargar</a>
+            <button type="button" class="btn-otra-foto" onclick="volverCamaraEnVivo()">🔄 Otra foto</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="galeria-gregorio-subidas" id="galeria-gregorio-subidas"></div>
+
+      <button type="button" class="btn-disparar-foto" onclick="tomarFotoElefante()" title="Tomar foto">📸</button>
+
+      <button type="button" class="btn-volver-unico" onclick="irA('pantalla-menu')">
+        ⬅ Volver
+      </button>
+    </section>
+
+    <!-- Reproductor para narraciones y recomendaciones -->
+    <audio id="audio-narracion-gregorio" preload="auto"></audio>
+
+    <!-- MODAL DE MEDIACIÓN PARA ADULTOS -->
+    <div id="modal-mediacion-adultos" class="modal-ficha oculto" onclick="cerrarModalMediacion(event)">
+      <div class="tarjeta-ficha" onclick="event.stopPropagation()">
+        <div class="encabezado-ficha">
+          <h3>Adultos y mediación</h3>
+          <div class="acciones-encabezado-ficha">
+            <button
+              type="button"
+              class="btn-audio-mini"
+              data-audio-btn
+              onclick="reproducirAudioMediacion(this)"
+              title="Escuchar a Gregorio"
+            >
+              🔊
+            </button>
+            <button type="button" class="btn-cerrar-ficha" onclick="cerrarModalMediacion()">✕</button>
+          </div>
+        </div>
+        <div class="contenido-ficha">
+          <p>
+            Acompañar este espacio con un adulto cercano ayuda a conversar sobre lo que se siente y a cuidar el ritmo de cada momento.
+          </p>
+          <p>
+            El botón de parlante (🔊) es para escuchar la voz de Gregorio.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL COMPARTIDO: INSTRUCCIONES Y GUION -->
+    <div id="modal-ficha-ritual" class="modal-ficha oculto" onclick="cerrarModalFicha(event)">
+      <div class="tarjeta-ficha" onclick="event.stopPropagation()">
+        <div class="encabezado-ficha">
+          <h3 id="ficha-titulo">Guía</h3>
+          <button type="button" class="btn-cerrar-ficha" onclick="cerrarModalFicha()">✕</button>
+        </div>
+        <div class="contenido-ficha">
+          <p><strong>Propósito:</strong> <span id="ficha-proposito"></span></p>
+          <p><strong>Materiales:</strong> <span id="ficha-materiales"></span></p>
+          <div class="bloque-ficha">
+            <strong>Paso a paso:</strong>
+            <ol id="ficha-pasos"></ol>
+          </div>
+          <div class="bloque-ficha">
+            <strong>Lo que dice Gregorio:</strong>
+            <p class="guion-texto" id="ficha-guion"></p>
+          </div>
+          <div class="bloque-ficha">
+            <strong>Acompañamiento adulto:</strong>
+            <p id="ficha-acompanamiento"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
