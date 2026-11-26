@@ -4,11 +4,19 @@ let nivelActual = 1;
 let temporizadorAvance = null;
 let temporizadorConteoDedos = null;
 let temporizadorReinicioMision = null;
-let clicsAcumuladosPC = 0;
-let temporizadorPC = null;
-let ultimoToqueTactilMs = 0;
+let temporizadorSuspenderCtx = null;
+
+const dedosActivosCaminito = new Set();
+let maxDedosEnGestoCaminito = 0;
+let temporizadorCierreGestoCaminito = null;
+
+let clicsPCEnCaminito = 0;
+let temporizadorClicsPC = null;
 
 const RUTA_AUDIOS = 'assets/Audios/';
+
+const TEXTO_GUION_MEDIACION =
+  'Para usar esta aplicación necesitas la ayuda de un adulto. Puedes buscar a tu papá, a tu mamá o a alguna de tus profesoras. ¡Los científicos también necesitamos ayudantes!';
 
 const AUDIOS_GENERALES = {
   bienvenida: `${RUTA_AUDIOS}Audio Bienvenida GregorioElefante.wav`,
@@ -59,19 +67,37 @@ const CARA_BASE_EMOCION = {
   desagrado: 'assets/images/Gregorio desagrado.png'
 };
 
-const ADJETIVO_INTENSIDAD = {
-  triste:    'triste',
-  bravo:     'bravo',
-  alegre:    'alegre',
-  asustado:  'asustado',
-  desagrado: 'con asco'
+const ETIQUETA_NIVEL_DEDO = {
+  triste: {
+    1: '1 dedito = un poquito triste',
+    2: '2 deditos = medianamente triste',
+    3: '3 deditos = muy triste'
+  },
+  bravo: {
+    1: '1 dedito = un poquito bravo',
+    2: '2 deditos = medianamente bravo',
+    3: '3 deditos = muy bravo'
+  },
+  alegre: {
+    1: '1 dedito = un poquito alegre',
+    2: '2 deditos = medianamente alegre',
+    3: '3 deditos = muy alegre'
+  },
+  asustado: {
+    1: '1 dedito = un poquito asustado',
+    2: '2 deditos = medianamente asustado',
+    3: '3 deditos = muy asustado'
+  },
+  desagrado: {
+    1: '1 dedito = un poquito asqueado',
+    2: '2 deditos = medianamente asqueado',
+    3: '3 deditos = muy asqueado'
+  }
 };
 
 function textoIntensidadPorEmocion(cantidad, claveEmocion = emocionActual) {
-  const adj = ADJETIVO_INTENSIDAD[claveEmocion] || 'triste';
-  if (cantidad === 1) return `1 dedo = un poco ${adj}`;
-  if (cantidad === 2) return `2 dedos = medianamente ${adj}`;
-  return `3 dedos = muy ${adj}`;
+  const mapa = ETIQUETA_NIVEL_DEDO[claveEmocion] || ETIQUETA_NIVEL_DEDO.triste;
+  return mapa[cantidad] || mapa[1];
 }
 
 function guiaResumenIntensidad(claveEmocion = emocionActual) {
@@ -79,19 +105,19 @@ function guiaResumenIntensidad(claveEmocion = emocionActual) {
 }
 
 const INSTRUCCIONES_JUEGO = {
-  ducha:    'Toca la trompa de Gregorio para lavarte las manos.',
-  casita:   'Toca la pantalla para construir.',
-  burbujas: 'Toca las burbujas para explotarlas.',
-  caricia:  'Desliza en el cuerpo de Gregorio para echarle cremita.',
-  ritmo:    'Toca las 8 notas musicales para que suenen (Do a Do).'
+  ducha:    'Toca para ducharte y cantar o limpiar pompas.',
+  casita:   'Toca para apilar bloques y crear tu construcción.',
+  burbujas: 'Toca las burbujas para explotarlas con tu dedito.',
+  caricia:  'Desliza para hacer un masaje suave con crema.',
+  ritmo:    'Toca las 8 notas de Do a Do para crear tu melodía.'
 };
 
 const FRASE_EMOCION_JUEGO = {
-  ducha:    'Cuando sientes asco puedes tomar una ducha.',
-  casita:   'Cuando estás bravo puedes construir con los bloques.',
+  ducha:    'Cuando sientes asco puedes tomar una ducha y cantar.',
+  casita:   'Cuando estás bravo puedes apilar bloques y construir.',
   burbujas: 'Cuando estás alegre puedes explotar burbujas.',
-  caricia:  'Cuando estás triste puedes ponerte cremita suave en el spa.',
-  ritmo:    'Cuando estás asustado puedes tocar las 8 notas de Do a Do.'
+  caricia:  'Cuando estás triste puedes hacer un masaje con crema.',
+  ritmo:    'Cuando estás asustado puedes tocar notas y crear melodía.'
 };
 
 const JUEGO_POR_EMOCION = {
@@ -103,15 +129,14 @@ const JUEGO_POR_EMOCION = {
 };
 
 const FOTOS_GREGORIO_GALERIA = [
-  { id: 'alegre',    nombre: 'Alegre',   guia: 'Imita su carita alegre',   src: 'assets/images/Gregorio feliz.png' },
-  { id: 'triste',    nombre: 'Triste',   guia: 'Imita su carita triste',   src: 'assets/images/Gregorio triste.png' },
-  { id: 'bravo',     nombre: 'Bravo',    guia: 'Imita su carita bravo',    src: 'assets/images/Gregorio furioso.png' },
-  { id: 'asustado',  nombre: 'Asustado', guia: 'Imita su carita asustado', src: 'assets/images/Gregorio asustado.png' },
-  { id: 'desagrado', nombre: 'Asco',     guia: 'Imita su carita de asco',  src: 'assets/images/Gregorio desagrado.png' }
+  { id: 'alegre',    nombre: 'Alegre',   guia: 'Sonríe con alegría y tómate una foto', src: 'assets/images/Gregorio feliz.png' },
+  { id: 'triste',    nombre: 'Triste',   guia: 'Haz carita de tristeza y tómate una foto', src: 'assets/images/Gregorio triste.png' },
+  { id: 'bravo',     nombre: 'Bravo',    guia: 'Haz carita de bravo y tómate una foto', src: 'assets/images/Gregorio furioso.png' },
+  { id: 'asustado',  nombre: 'Asustado', guia: 'Haz carita de miedo y tómate una foto', src: 'assets/images/Gregorio asustado.png' },
+  { id: 'desagrado', nombre: 'Asco',     guia: 'Haz carita de asco y tómate una foto', src: 'assets/images/Gregorio desagrado.png' }
 ];
 
 const cacheImagenesJuego = {};
-const preloadedAudios = {};
 
 function obtenerImagenJuego(clave) {
   const ruta = IMAGENES_JUEGO_GREGORIO[clave] || FOTOS_GREGORIO_GALERIA[0].src;
@@ -143,23 +168,6 @@ function precargarAudiosYImagenes() {
   });
 
   precargarGaleriaGregorio();
-
-  const todasLasRutas = [
-    ...Object.values(AUDIOS_GENERALES),
-    ...Object.values(AUDIOS_INSTRUCCIONES_EMOCION),
-    ...Object.values(AUDIOS_MINIJUEGOS),
-    ...Object.values(AUDIOS_FOTOS_EMOCION)
-  ];
-
-  todasLasRutas.forEach(ruta => {
-    const codificada = encodeURI(ruta);
-    if (!preloadedAudios[codificada]) {
-      const a = new Audio();
-      a.preload = 'auto';
-      a.src = codificada;
-      preloadedAudios[codificada] = a;
-    }
-  });
 }
 
 let juegoActual = 'caricia';
@@ -227,46 +235,46 @@ const RITUALES_POR_EMOCION = {
   triste: {
     1: {
       titulo: "La caricia de Gregorio",
-      resumen: "Pon tu manito con la palma hacia arriba y acaricia tu pulgar suavemente desde la base hasta la punta.",
-      proposito: "Ofrecer una experiencia breve de contacto suave y atención corporal.",
+      resumen: "Palma hacia arriba y acaricia tu pulgar despacio desde la base hasta la punta.",
+      proposito: "Acompañar un poquito de tristeza con un cariñito suave en la mano.",
       materiales: "Ninguno.",
       pasos: [
-        "Pon una mano frente a ti con la palma hacia arriba.",
-        "Con el dedo índice de la otra mano, acaricia suavemente tu pulgar.",
-        "Recorre el pulgar desde la base hasta la punta."
+        "Coloca tu manito con la palma hacia arriba.",
+        "Acaricia suavemente con tu pulgar desde la base hasta la puntita.",
+        "Hazlo despacio como dándole un cariñito a tu mano."
       ],
-      guion: "Hola, soy Gregorio. Pon tu manito aquí y, con tu dedito índice, acaricia tu pulgar suavemente.",
-      acompanamiento: "Validar sin presionar y ofrecer compañía tranquila.",
+      guion: "Veo que hoy te sientes un poquito triste. Coloca tu palma hacia arriba y acaríciala suavemente con tu pulgar, despacio.",
+      acompanamiento: "Acompañar con calidez y sin presionar.",
       imagen: "assets/images/Ritual 1 tristeza.jpg",
       audio: `${RUTA_AUDIOS}Audio tristeza 1.wav`
     },
     2: {
       titulo: "El abrazo de deditos",
-      resumen: "Acerca tus dos manos frente a tu pecho y entrelaza tus deditos suavemente, sin apretar.",
-      proposito: "Ofrecer una experiencia de contacto y contención.",
+      resumen: "Pon tus manos frente a frente y entrelaza tus deditos como un abrazo de manos.",
+      proposito: "Sentir acompañamiento cuando la tristeza es mediana.",
       materiales: "Ninguno.",
       pasos: [
-        "Acerca tus dos manos frente a tu pecho.",
+        "Pon tus manos frente a frente.",
         "Entrelaza tus deditos suavemente.",
-        "Separa tus deditos despacio."
+        "Siente el abrazo de tus manos y suéltalas despacio."
       ],
-      guion: "Vamos a juntar tus deditos suavemente, sin apretar, como un abrazo pequeñito.",
-      acompanamiento: "Preguntar antes de abrazar y respetar lo que el niño elija.",
+      guion: "Tu tristeza se siente medianamente grande. Pon tus manos frente a frente y entrelaza tus deditos como un abrazo.",
+      acompanamiento: "Acompañar con calma y respetar el ritmo del niño.",
       imagen: "assets/images/Ritual 2 tristeza.jpg",
       audio: `${RUTA_AUDIOS}Audio tristeza 2.wav`
     },
     3: {
       titulo: "El nido de Gregorio",
-      resumen: "Busca un peluche o cojín suave, abrázalo con tus manos y saluda cada dedo con tu índice.",
-      proposito: "Facilitar la búsqueda de seguridad y consuelo cuando estás muy triste.",
-      materiales: "Peluche o cojín y adulto de confianza.",
+      resumen: "Busca tu peluche favorito, dale un abrazo grande y dile algo lindo.",
+      proposito: "Buscar consuelo y acompañamiento cuando estás muy triste.",
+      materiales: "Peluche favorito y adulto de confianza.",
       pasos: [
-        "Busca un peluche o cojín suave.",
-        "Abrázalo con tus manos.",
-        "Saluda cada dedo con tu dedito índice."
+        "Busca tu peluche favorito.",
+        "Dale un abrazo grandote.",
+        "Dile algo lindo mientras te acompaña."
       ],
-      guion: "Cuando estás muy triste, puedes abrazar tu peluche o cojín. Yo me quedo aquí contigo.",
-      acompanamiento: "Ofrecer presencia calmada sin exigir hablar ni dejar de llorar.",
+      guion: "Estás muy triste. Busca tu peluche favorito, dale un abrazo grandote y dile algo lindo.",
+      acompanamiento: "Ofrecer presencia tranquila sin exigir hablar.",
       imagen: "assets/images/Ritual 3 tristeza.jpg",
       audio: `${RUTA_AUDIOS}Audio tristeza 3.wav`
     }
@@ -274,46 +282,46 @@ const RITUALES_POR_EMOCION = {
   bravo: {
     1: {
       titulo: "El detective de las manos",
-      resumen: "Abre tu palma y dibuja una espiral despacio con el índice de la otra mano.",
-      proposito: "Notar señales tempranas cuando estás bravo en el cuerpo.",
+      resumen: "Dibuja una espiral con tu dedito sobre la palma y respira despacio.",
+      proposito: "Notar cuando estás un poquito bravo y respirar con calma.",
       materiales: "Ninguno.",
       pasos: [
-        "Abre una mano y mira tu palma.",
-        "Dibuja una espiral despacio con tu otro índice.",
-        "Recorre el borde de tu palma."
+        "Abre tu palma.",
+        "Dibuja una espiral con tu dedito sobre la palma.",
+        "Inhala y exhala despacio mientras sientes cosquillitas."
       ],
-      guion: "Cuando estás bravo, tus manos te avisan. Dibujemos una espiral suave en tu palma.",
-      acompanamiento: "Ayudar a nombrar lo que pasó sin pedir explicaciones largas.",
+      guion: "Estás un poquito bravo. Dibuja una espiral con tu dedito en tu palma, inhala y exhala despacio.",
+      acompanamiento: "Ayudar a nombrar la emoción con tranquilidad.",
       imagen: "assets/images/Ritual 1 rabia.jpg",
       audio: `${RUTA_AUDIOS}Audio bravo 1.wav`
     },
     2: {
       titulo: "La fábrica de plastilina",
-      resumen: "Aplasta suavemente la plastilina con tus dedos y haz huequitos con los pulgares.",
-      proposito: "Canalizar energía con las manos de forma segura.",
-      materiales: "Plastilina blanda.",
+      resumen: "Amasa, aplasta, haz huequitos y estira plastilina con tus manos.",
+      proposito: "Canalizar energía cuando estás medianamente bravo.",
+      materiales: "Plastilina.",
       pasos: [
-        "Toma un trocito de plastilina.",
-        "Aplástala con tus dedos.",
-        "Haz huequitos con tus pulgares."
+        "Toma plastilina y amásala.",
+        "Aplástala y hazle huequitos.",
+        "Aprieta, estira y crea figuras."
       ],
-      guion: "Usa tus manos con esta plastilina para apretar y hacer huequitos.",
-      acompanamiento: "Ofrecer alternativas blandas si la textura no agrada.",
+      guion: "Tu furia creció un poquito. Aplasta plastilina, haz huequitos y estírala con tus manos.",
+      acompanamiento: "Facilitar materiales seguros o alternativas agradables.",
       imagen: "assets/images/Ritual 2 rabia.jpg",
       audio: `${RUTA_AUDIOS}Audio bravo 2.wav`
     },
     3: {
       titulo: "El volcán encuentra una salida",
-      resumen: "Apoya tus palmas y dedos en un cojín firme, empuja suavemente unos segundos y suelta.",
-      proposito: "Cuidar la seguridad cuando estás muy bravo.",
-      materiales: "Cojín firme y adulto acompañante.",
+      resumen: "Pon tus manos sobre un cojín y empújalo con fuerza sin lastimarte.",
+      proposito: "Liberar energía intensa de forma segura cuando estás muy bravo.",
+      materiales: "Cojín y adulto acompañante.",
       pasos: [
-        "Apoya tus manos en un cojín firme.",
-        "Empuja suavemente unos segundos.",
-        "Suelta las manos y haz una pausa."
+        "Busca un cojín seguro.",
+        "Pon tus manos encima de él.",
+        "Empújalo con fuerza sin lastimarte ni lastimar a nadie."
       ],
-      guion: "Si estás muy bravo por dentro, pon tus manos en este cojín y empuja con cuidado.",
-      acompanamiento: "Priorizar siempre la seguridad y hablar con calma.",
+      guion: "Estás muy molesto. Pon tus manos sobre un cojín y empújalo con fuerza, sin lastimarte.",
+      acompanamiento: "Cuidar la seguridad física y hablar con calma.",
       imagen: "assets/images/Ritual 3 rabia.jpg",
       audio: `${RUTA_AUDIOS}Audio bravo 3.wav`
     }
@@ -321,46 +329,46 @@ const RITUALES_POR_EMOCION = {
   alegre: {
     1: {
       titulo: "El saludo de los cinco amigos",
-      resumen: "Abre tus cinco dedos, haz que saluden y toca suavemente cada uno con tu pulgar.",
-      proposito: "Expresar cuando estás alegre con movimiento.",
+      resumen: "Abre tus cinco deditos y salúdalos uno a uno con tu pulgar.",
+      proposito: "Expresar alegría saludando con tus deditos.",
       materiales: "Ninguno.",
       pasos: [
-        "Abre tus cinco dedos.",
-        "Haz que saluden.",
-        "Toca cada dedito con tu pulgar."
+        "Abre tus cinco deditos.",
+        "Salúdalos con tu pulgar.",
+        "Di «¡Hola!» a cada dedito."
       ],
-      guion: "¡Qué chévere estar alegre! Abre tus cinco deditos y toca cada uno con tu pulgar.",
-      acompanamiento: "Acompañar y compartir cuando el niño está alegre.",
+      guion: "¡Estás contento! Abre tus cinco deditos y salúdalos a todos con tu pulgar.",
+      acompanamiento: "Acompañar la alegría compartida.",
       imagen: "assets/images/Ritual alegría 1.jpg",
       audio: `${RUTA_AUDIOS}Audio alegría 1.wav`
     },
     2: {
       titulo: "La orquesta de los dedos",
-      resumen: "Pon tus manos sobre una mesa, toca con tus dedos uno a uno e inventa un ritmo corto.",
-      proposito: "Organizar la energía mediante ritmo.",
+      resumen: "En una mesa, usa tus deditos para crear un ritmo: tum, tum, tac, tac.",
+      proposito: "Crear ritmo y música con los dedos al estar alegre.",
       materiales: "Una mesa.",
       pasos: [
-        "Apoya tus manos sobre la mesa.",
-        "Toca con cada dedo uno a uno.",
-        "Inventa un ritmo corto."
+        "Busca una mesa.",
+        "Usa tus deditos para tocar un ritmo.",
+        "Crea tu canción con tum, tum, tac, tac."
       ],
-      guion: "Vamos a hacer música con tus deditos sobre la mesa.",
-      acompanamiento: "Seguir el ritmo y facilitar transiciones tranquilas.",
+      guion: "¡Orejitas arriba! Busca una mesa y usa tus deditos para crear un ritmo: tum, tum, tac, tac.",
+      acompanamiento: "Acompañar el juego rítmico y cuidar transiciones.",
       imagen: "assets/images/Ritual 2 alegría.jpg",
       audio: `${RUTA_AUDIOS}Audio alegría 2.wav`
     },
     3: {
       titulo: "La misión de los exploradores",
-      resumen: "Camina por un camino corto y seguro y, al llegar, junta tu pulgar con cada dedo.",
-      proposito: "Canalizar energía alta con un recorrido breve.",
-      materiales: "Espacio despejado.",
+      resumen: "Invita a un amigo o adulto a jugar con sus palmas y crear un ritmo juntos.",
+      proposito: "Compartir el juego con las palmas cuando la alegría es alta.",
+      materiales: "Un amigo o adulto acompañante.",
       pasos: [
-        "Camina hasta el lugar que te indiquen.",
-        "Junta tu pulgar con tu índice.",
-        "Toca los demás dedos uno por uno."
+        "Invita a un amigo o adulto.",
+        "Jueguen con sus palmas.",
+        "Creen un ritmo juntos."
       ],
-      guion: "Caminemos hasta el punto marcado y junta tu pulgar con cada dedito.",
-      acompanamiento: "Mantener el recorrido seguro y breve.",
+      guion: "Jugar acompañado es muy divertido. Invita a alguien a jugar con sus palmas y creen un ritmo juntos.",
+      acompanamiento: "Acompañar el juego y mantener un espacio seguro.",
       imagen: "assets/images/Ritual 3 alegría.jpg",
       audio: `${RUTA_AUDIOS}Audio alegría 3.wav`
     }
@@ -368,46 +376,46 @@ const RITUALES_POR_EMOCION = {
   asustado: {
     1: {
       titulo: "Los dedos amigos",
-      resumen: "Junta la punta de tu pulgar con la de tu índice, sepáralos despacio y vuelve a juntarlos.",
-      proposito: "Dar un punto de atención sencillo cuando estás asustado.",
+      resumen: "Respira y cuenta del 1 al 10 con tus deditos para calmar un poquito de miedo.",
+      proposito: "Acompañar un susto leve contando con los dedos.",
       materiales: "Ninguno.",
       pasos: [
-        "Junta tu pulgar y tu índice.",
-        "Sepáralos despacio.",
-        "Vuélvelos a juntar."
+        "Respira despacio.",
+        "Cuenta del 1 al 10 usando tus deditos.",
+        "Termina con una pausa tranquila."
       ],
-      guion: "Si estás un poquito asustado, junta tu pulgar y tu índice despacio.",
-      acompanamiento: "Escuchar qué asustó y retirar si hay peligro real.",
+      guion: "Estás un poquito asustado. Respiremos y contemos del uno al diez con tus deditos.",
+      acompanamiento: "Validar el miedo y acompañar sin burlas.",
       imagen: "assets/images/Ritual 1 miedo.jpg",
       audio: `${RUTA_AUDIOS}Audio susto 1.wav`
     },
     2: {
       titulo: "La casita protectora",
-      resumen: "Acerca tus dos manos con las palmas enfrentadas y une las puntas de los dedos como un techito.",
-      proposito: "Representar un lugar o persona de confianza.",
+      resumen: "Respira despacio, junta tus manitos, acarícialas y piensa en algo que te guste.",
+      proposito: "Buscar calma y un pensamiento agradable cuando crece el miedo.",
       materiales: "Ninguno.",
       pasos: [
-        "Pon tus dos manos frente a frente.",
-        "Une las puntas de tus dedos como un techito.",
-        "Piensa dónde te sientes seguro."
+        "Respira despacio y cierra los ojitos si quieres.",
+        "Junta tus manitos y acarícialas suavemente.",
+        "Piensa en algo que te guste mucho."
       ],
-      guion: "Armemos un techito con tus manos y piensa en un lugar seguro.",
-      acompanamiento: "Brindar protección real y explicaciones claras.",
+      guion: "Tu miedo está creciendo. Respira despacio, junta y acaricia tus manitos y piensa en algo que te guste.",
+      acompanamiento: "Brindar cercanía y explicar con palabras claras.",
       imagen: "assets/images/Ritual 2 miedo.jpg",
       audio: `${RUTA_AUDIOS}Audio susto 2.wav`
     },
     3: {
       titulo: "El camino hacia alguien de confianza",
-      resumen: "Toca tu palma con tu dedito índice y ve con tu adulto de confianza.",
-      proposito: "Pedir apoyo cuando estás muy asustado.",
+      resumen: "Busca un adulto de confianza y haz una señal con tu manito para pedir ayuda.",
+      proposito: "Pedir ayuda a una persona de confianza cuando estás muy asustado.",
       materiales: "Adulto de confianza.",
       pasos: [
-        "Toca tu palma con tu dedito índice.",
-        "Acércate a un adulto de confianza.",
-        "Pide ayuda como tú prefieras."
+        "Busca un adulto en quien confíes.",
+        "Haz una señal con tu manito.",
+        "Pide ayuda para sentirte cuidado."
       ],
-      guion: "Cuando estás muy asustado, toca tu palma y ve con alguien que te cuide.",
-      acompanamiento: "Acercarse con calma, ponerse a su altura y proteger.",
+      guion: "Estás muy asustado. Busca un adulto en quien confíes y haz una señal con tu manito para pedir ayuda.",
+      acompanamiento: "Ponerse a su altura, escuchar y proteger.",
       imagen: "assets/images/Ritual 3 miedo.jpg",
       audio: `${RUTA_AUDIOS}Audio susto 3.wav`
     }
@@ -415,55 +423,52 @@ const RITUALES_POR_EMOCION = {
   desagrado: {
     1: {
       titulo: "Mi dedo dice «no, gracias»",
-      resumen: "Levanta tu dedo índice, muévelo suavemente de un lado a otro y di «No, gracias».",
-      proposito: "Expresar rechazo con claridad y respeto.",
+      resumen: "Levanta tu dedito índice de lado a lado y di «¡No, gracias! ¡No me gusta!».",
+      proposito: "Expresar rechazo cuando algo no te gusta o da asco.",
       materiales: "Ninguno.",
       pasos: [
-        "Levanta tu dedo índice.",
-        "Muévelo suave de un lado a otro.",
-        "Di «No, gracias» o «No me gusta»."
+        "Levanta tu dedito índice.",
+        "Muévelo de un lado a otro.",
+        "Di «¡No, gracias! ¡No me gusta!»."
       ],
-      guion: "Si sientes asco o algo no te gusta, levanta tu dedito índice y di «No, gracias».",
-      acompanamiento: "Respetar el rechazo sin obligar a probar o tocar.",
+      guion: "¿Sientes asco? Levanta tu dedito índice de un lado a otro y di: ¡No, gracias! ¡No me gusta!",
+      acompanamiento: "Respetar el límite y no obligar.",
       imagen: "assets/images/Ritual 1 desagrado.jpg",
       audio: `${RUTA_AUDIOS}Audio asco 1.wav`
     },
     2: {
       titulo: "Los deditos exploradores se alejan",
-      resumen: "Pon tu índice y medio como dos piernas sobre tu palma y hazlos caminar hacia el borde.",
-      proposito: "Practicar tomar distancia de lo que incomoda.",
+      resumen: "Convierte tus deditos en piecitos y camina para alejarte de lo que incomoda.",
+      proposito: "Tomar distancia de estímulos que producen asco.",
       materiales: "Ninguno.",
       pasos: [
-        "Abre tu palma.",
-        "Pon tu dedo índice y medio como dos piernas.",
-        "Hazlos caminar hacia el borde."
+        "Convierte tus deditos en piecitos.",
+        "Hazlos caminar: un pasito, dos pasitos.",
+        "Aléjate de eso que no te gusta."
       ],
-      guion: "Si algo te da asco o incomoda, haz caminar dos deditos lejos de ahí.",
-      acompanamiento: "Retirar el estímulo desagradable cuando sea posible.",
+      guion: "Convierte tus deditos en piecitos: un pasito, dos pasitos, y aléjate de lo que no te gusta.",
+      acompanamiento: "Retirar el estímulo desagradable si es posible.",
       imagen: "assets/images/Ritual 2 desagrado.jpg",
       audio: `${RUTA_AUDIOS}Audio asco 2.wav`
     },
     3: {
       titulo: "Las manos limpias",
-      resumen: "Si tus manos están sucias, usa agua y jabón: frota palmas, dorso, entre los dedos y yemas; luego seca.",
-      proposito: "Atender cuando sientes asco por suciedad real.",
+      resumen: "Si sientes asco por manos sucias, lávatelas muy bien con agua y jabón.",
+      proposito: "Limpiar las manos cuando el asco se relaciona con suciedad.",
       materiales: "Agua, jabón y toalla.",
       pasos: [
-        "Moja tus manos y pon jabón.",
-        "Frota palmas, dorso, entre dedos y yemas.",
-        "Enjuaga y sécalas bien."
+        "Ve donde haya agua y jabón.",
+        "Moja tus manitos y lávalas muy bien.",
+        "Enjuaga y sécalas."
       ],
-      guion: "Si tocaste algo que ensució tus manos, lavémoslas con agua y jabón.",
-      acompanamiento: "Usar solo cuando haya suciedad real.",
+      guion: "Si sientes asco por tener las manos sucias, moja tus manitos y lávalas muy bien con agua y jabón.",
+      acompanamiento: "Acompañar el lavado cuando exista suciedad real.",
       imagen: "assets/images/Ritual 3 desagrado.jpg",
       audio: `${RUTA_AUDIOS}Audio asco 3.wav`
     }
   }
 };
 
-// ========================================================
-// PONER Y QUITAR AUDIOS (.WAV) A VOLUNTAD
-// ========================================================
 function actualizarEstadoBotonesAudio(estaSonando) {
   document.querySelectorAll('[data-audio-btn]').forEach(btn => {
     const esEste = btn.getAttribute('data-audio-activo') === 'true';
@@ -481,30 +486,73 @@ function actualizarEstadoBotonesAudio(estaSonando) {
   });
 }
 
+function suspenderAudioCtxSiLibre() {
+  clearTimeout(temporizadorSuspenderCtx);
+  temporizadorSuspenderCtx = setTimeout(() => {
+    if (audioCtx && audioCtx.state === 'running') {
+      audioCtx.suspend().catch(() => {});
+    }
+  }, 600);
+}
+
 function detenerNarracion() {
   const audioNar = document.getElementById('audio-narracion-gregorio');
   if (audioNar) {
     audioNar.pause();
     audioNar.currentTime = 0;
   }
+  if (typeof window.speechSynthesis !== 'undefined') {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
   audioActualRuta = '';
   document.querySelectorAll('[data-audio-btn]').forEach(btn => {
     btn.setAttribute('data-audio-activo', 'false');
   });
   actualizarEstadoBotonesAudio(false);
+  suspenderAudioCtxSiLibre();
 }
 
-function alternarNarracion(rutaWav, botonPresionado = null) {
-  if (!audiosActivados || !rutaWav) return;
-  asegurarAudioCtx();
+function hablarRespaldoTexto(texto, botonPresionado = null) {
+  if (!audiosActivados || !texto || typeof window.speechSynthesis === 'undefined') {
+    actualizarEstadoBotonesAudio(false);
+    return;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(texto);
+    utter.lang = 'es-ES';
+    utter.rate = 0.96;
+    utter.onstart = () => actualizarEstadoBotonesAudio(true);
+    utter.onend = () => actualizarEstadoBotonesAudio(false);
+    utter.onerror = () => actualizarEstadoBotonesAudio(false);
+    if (botonPresionado) {
+      botonPresionado.setAttribute('data-audio-activo', 'true');
+    }
+    window.speechSynthesis.speak(utter);
+  } catch (e) {
+    actualizarEstadoBotonesAudio(false);
+  }
+}
+
+function alternarNarracion(rutaWav, botonPresionado = null, rutasAlternativas = [], textoRespaldo = '') {
+  if (!audiosActivados || (!rutaWav && !textoRespaldo)) return;
 
   const audioNar = document.getElementById('audio-narracion-gregorio');
   if (!audioNar) return;
 
   detenerReproductorRitual();
+  if (typeof window.speechSynthesis !== 'undefined') {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  if (audioCtx && audioCtx.state === 'running') {
+    audioCtx.suspend().catch(() => {});
+  }
 
-  const rutaCodificada = encodeURI(rutaWav);
-  const esElMismo = audioActualRuta === rutaCodificada;
+  const candidatos = [rutaWav, ...(Array.isArray(rutasAlternativas) ? rutasAlternativas : [])]
+    .filter(Boolean)
+    .map(r => encodeURI(r));
+
+  const esElMismo = candidatos.includes(audioActualRuta);
 
   document.querySelectorAll('[data-audio-btn]').forEach(btn => {
     btn.setAttribute('data-audio-activo', botonPresionado && btn === botonPresionado ? 'true' : 'false');
@@ -516,23 +564,50 @@ function alternarNarracion(rutaWav, botonPresionado = null) {
     return;
   }
 
-  if (!esElMismo) {
+  if (!candidatos.length) {
+    hablarRespaldoTexto(textoRespaldo, botonPresionado);
+    return;
+  }
+
+  let indiceCandidato = 0;
+
+  const intentarReproducir = () => {
+    const rutaActual = candidatos[indiceCandidato];
     audioNar.pause();
     audioNar.currentTime = 0;
-    audioActualRuta = rutaCodificada;
-    audioNar.src = rutaCodificada;
-  }
+    audioActualRuta = rutaActual;
+    audioNar.src = rutaActual;
+
+    audioNar.play().then(() => {
+      actualizarEstadoBotonesAudio(true);
+    }).catch(() => {
+      indiceCandidato++;
+      if (indiceCandidato < candidatos.length) {
+        intentarReproducir();
+      } else if (textoRespaldo) {
+        hablarRespaldoTexto(textoRespaldo, botonPresionado);
+      } else {
+        actualizarEstadoBotonesAudio(false);
+      }
+    });
+  };
 
   audioNar.onended = () => {
     actualizarEstadoBotonesAudio(false);
   };
 
-  audioNar.play().then(() => {
-    actualizarEstadoBotonesAudio(true);
-  }).catch(err => {
-    console.warn('No se pudo reproducir el audio:', rutaCodificada, err);
-    actualizarEstadoBotonesAudio(false);
-  });
+  audioNar.onerror = () => {
+    indiceCandidato++;
+    if (indiceCandidato < candidatos.length) {
+      intentarReproducir();
+    } else if (textoRespaldo) {
+      hablarRespaldoTexto(textoRespaldo, botonPresionado);
+    } else {
+      actualizarEstadoBotonesAudio(false);
+    }
+  };
+
+  intentarReproducir();
 }
 
 function toggleTodosLosAudios() {
@@ -540,8 +615,9 @@ function toggleTodosLosAudios() {
   if (!audiosActivados) {
     detenerNarracion();
     detenerReproductorRitual();
-  } else {
-    asegurarAudioCtx();
+    if (audioCtx && audioCtx.state === 'running') {
+      audioCtx.suspend().catch(() => {});
+    }
   }
   return audiosActivados;
 }
@@ -559,7 +635,16 @@ function reproducirAudioInicio(btn = null) {
 }
 
 function reproducirAudioMediacion(btn = null) {
-  alternarNarracion(AUDIOS_GENERALES.mediacion, btn);
+  alternarNarracion(
+    AUDIOS_GENERALES.mediacion,
+    btn,
+    [
+      `${RUTA_AUDIOS}Audio Padres y mediadores .wav`,
+      `${RUTA_AUDIOS}Audio padres y mediadores.wav`,
+      `${RUTA_AUDIOS}Audio adultos y mediacion.wav`
+    ],
+    TEXTO_GUION_MEDIACION
+  );
 }
 
 function reproducirInstruccionDedos(btn = null) {
@@ -583,12 +668,26 @@ function reproducirAudioFotoActual(btn = null) {
   alternarNarracion(AUDIOS_FOTOS_EMOCION[fotoGregorioSeleccionadaId], btn);
 }
 
-// ========================================================
-// BLOQUEOS Y NAVEGACIÓN
-// ========================================================
 function activarBloqueosMovilYCopia() {
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('dragstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => {
+    e.preventDefault();
+  }, { capture: true });
+
+  document.addEventListener('dragstart', e => {
+    e.preventDefault();
+  }, { capture: true });
+
+  document.addEventListener('selectstart', e => {
+    const dentroDeFicha = e.target && e.target.closest && e.target.closest('.tarjeta-ficha');
+    if (!dentroDeFicha) {
+      e.preventDefault();
+    }
+  }, { capture: true });
+
+  document.addEventListener('gesturestart', e => {
+    e.preventDefault();
+  }, { passive: false });
+
   document.addEventListener('touchmove', e => {
     const dentroDeFicha = e.target && e.target.closest && e.target.closest('.tarjeta-ficha');
     if (!dentroDeFicha) {
@@ -635,6 +734,12 @@ function irA(idPantalla) {
   clearTimeout(temporizadorAvance);
   clearTimeout(temporizadorConteoDedos);
   clearTimeout(temporizadorReinicioMision);
+  clearTimeout(temporizadorCierreGestoCaminito);
+  clearTimeout(temporizadorClicsPC);
+  dedosActivosCaminito.clear();
+  maxDedosEnGestoCaminito = 0;
+  clicsPCEnCaminito = 0;
+
   cancelAnimationFrame(animacionJuegoId);
   detenerNarracion();
   detenerReproductorRitual();
@@ -705,12 +810,14 @@ function seleccionarEmocion(clave, nombreBonito) {
   emocionActual = clave;
   nombreEmocionActual = nombreBonito;
   nivelActual = 1;
-  clicsAcumuladosPC = 0;
+  dedosActivosCaminito.clear();
+  maxDedosEnGestoCaminito = 0;
+  clicsPCEnCaminito = 0;
 
   document.getElementById('badge-emocion').textContent = nombreBonito.toUpperCase();
   document.getElementById('numero-dedos').textContent = '?';
   const subguia = document.getElementById('subguia-como-poner-dedos');
-  if (subguia) subguia.textContent = 'Pon 1, 2 o 3 dedos en el caminito';
+  if (subguia) subguia.textContent = 'Pon 1, 2 o 3 deditos en la pantalla';
 
   actualizarCaraIntensidad(1, true);
   limpiarHuellasCamino();
@@ -788,7 +895,7 @@ function aplicarPasoConteoDedos(paso, nivelFinal, contenedorHuellas) {
 
 function registrarCaminoDedos(cantidad) {
   if (navigator.vibrate) {
-    navigator.vibrate(45);
+    try { navigator.vibrate(40); } catch (e) {}
   }
 
   clearTimeout(temporizadorConteoDedos);
@@ -800,34 +907,21 @@ function registrarCaminoDedos(cantidad) {
   if (contenedor) contenedor.innerHTML = '';
 
   for (let paso = 1; paso <= nivelActual; paso++) {
-    const retraso = (paso - 1) * 165;
+    const retraso = (paso - 1) * 160;
     temporizadorConteoDedos = setTimeout(() => {
       aplicarPasoConteoDedos(paso, nivelActual, contenedor);
     }, retraso);
   }
 }
 
-function procesarInteraccionCaminito(cantidadDedos) {
-  const ahora = Date.now();
-  if (ahora - ultimoToqueTactilMs < 350 && cantidadDedos === 1) {
-    return;
-  }
-  if (cantidadDedos > 1) {
-    ultimoToqueTactilMs = ahora;
-    clicsAcumuladosPC = 0;
-    registrarCaminoDedos(Math.min(cantidadDedos, 3));
-    return;
-  }
-  if (clicsAcumuladosPC === 0 || clicsAcumuladosPC >= 3) {
-    clicsAcumuladosPC = 0;
-  }
-  clicsAcumuladosPC++;
-  registrarCaminoDedos(clicsAcumuladosPC);
+function sincronizarConteoDedosCaminito() {
+  const cantidadActual = Math.min(dedosActivosCaminito.size, 3);
+  if (cantidadActual <= 0) return;
 
-  clearTimeout(temporizadorPC);
-  temporizadorPC = setTimeout(() => {
-    clicsAcumuladosPC = 0;
-  }, 1600);
+  if (cantidadActual > maxDedosEnGestoCaminito) {
+    maxDedosEnGestoCaminito = cantidadActual;
+    registrarCaminoDedos(maxDedosEnGestoCaminito);
+  }
 }
 
 function configurarZonaTactilCaminito() {
@@ -835,23 +929,45 @@ function configurarZonaTactilCaminito() {
   if (!zonaTactil || zonaTactil.dataset.listo) return;
   zonaTactil.dataset.listo = '1';
 
-  zonaTactil.addEventListener('touchstart', function (e) {
+  zonaTactil.addEventListener('pointerdown', function (e) {
     e.preventDefault();
-    ultimoToqueTactilMs = Date.now();
-    const dedos = e.touches && e.touches.length ? Math.min(e.touches.length, 3) : 1;
-    procesarInteraccionCaminito(dedos);
+
+    if (e.pointerType === 'mouse') {
+      clicsPCEnCaminito = (clicsPCEnCaminito % 3) + 1;
+      maxDedosEnGestoCaminito = clicsPCEnCaminito;
+      registrarCaminoDedos(clicsPCEnCaminito);
+
+      clearTimeout(temporizadorClicsPC);
+      temporizadorClicsPC = setTimeout(() => {
+        clicsPCEnCaminito = 0;
+      }, 1500);
+      return;
+    }
+
+    clearTimeout(temporizadorCierreGestoCaminito);
+    if (dedosActivosCaminito.size === 0) {
+      maxDedosEnGestoCaminito = 0;
+    }
+
+    dedosActivosCaminito.add(e.pointerId);
+    sincronizarConteoDedosCaminito();
   }, { passive: false });
 
-  zonaTactil.addEventListener('click', function (e) {
-    e.preventDefault();
-    if (Date.now() - ultimoToqueTactilMs < 450) return;
-    procesarInteraccionCaminito(1);
-  });
+  const liberarDedo = e => {
+    if (e.pointerType === 'mouse') return;
+    dedosActivosCaminito.delete(e.pointerId);
+    if (dedosActivosCaminito.size === 0) {
+      clearTimeout(temporizadorCierreGestoCaminito);
+      temporizadorCierreGestoCaminito = setTimeout(() => {
+        maxDedosEnGestoCaminito = 0;
+      }, 220);
+    }
+  };
+
+  zonaTactil.addEventListener('pointerup', liberarDedo, { passive: true });
+  zonaTactil.addEventListener('pointercancel', liberarDedo, { passive: true });
 }
 
-// ========================================================
-// REPRODUCTOR EN RITUALES
-// ========================================================
 function formatearSegundos(seg) {
   const s = Math.max(0, Math.floor(seg));
   const min = Math.floor(s / 60);
@@ -893,8 +1009,11 @@ function iniciarRelojSimulado() {
 
 function toggleAudioPropio() {
   if (!audiosActivados) return;
-  asegurarAudioCtx();
   detenerNarracion();
+  if (audioCtx && audioCtx.state === 'running') {
+    audioCtx.suspend().catch(() => {});
+  }
+
   const reproductor = document.getElementById('mi-audio-gregorio');
   const boton = document.getElementById('btn-play');
   const estadoAudio = document.getElementById('estado-audio-futuro');
@@ -1004,12 +1123,12 @@ function mostrarAyudaPantalla(tipo) {
   if (tipo === 'juegos') {
     rellenarYMostrarFicha({
       titulo: "Juegos para las emociones",
-      proposito: "Explorar formas suaves de regular la emoción llenando la barra.",
+      proposito: "Explorar actividades según la emoción y llenar la barra.",
       materiales: "Ninguno.",
       pasos: [
         "Lee o toca la bocina para escuchar la instrucción del juego.",
-        "Llena la barra hasta el 100%.",
-        "Si cambias de emoción, la barra vuelve a 0%."
+        "Realiza la actividad en la pantalla hasta llenar la barra al 100%.",
+        "Cambia de emoción o juego cuando quieras."
       ],
       guion: "¡Juguemos juntos y llenemos la barra!",
       acompanamiento: "Acompañar al niño y conversar sobre cómo se siente."
@@ -1027,11 +1146,9 @@ function cerrarModalFicha(event) {
   }
 }
 
-// ========================================================
-// SONIDOS WEB AUDIO API (CLAROS Y CON BUEN VOLUMEN)
-// ========================================================
 function asegurarAudioCtx() {
   if (!audiosActivados) return null;
+  clearTimeout(temporizadorSuspenderCtx);
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return null;
   if (!audioCtx) {
@@ -1045,7 +1162,6 @@ function asegurarAudioCtx() {
 
 function desbloquearAudioEnPrimerToque() {
   const desbloquear = () => {
-    asegurarAudioCtx();
     const audioNar = document.getElementById('audio-narracion-gregorio');
     if (audioNar && !audioNar.dataset.desbloqueado) {
       audioNar.dataset.desbloqueado = '1';
@@ -1060,7 +1176,6 @@ function desbloquearAudioEnPrimerToque() {
     }
   };
   document.addEventListener('pointerdown', desbloquear, { passive: true });
-  document.addEventListener('touchstart', desbloquear, { passive: true });
 }
 
 function reproducirSonidoClick(tipo = 'suave') {
@@ -1095,12 +1210,13 @@ function reproducirSonidoClick(tipo = 'suave') {
     gain.connect(ctx.destination);
     osc.start(ahora);
     osc.stop(ahora + 0.09);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
 function activarSonidoEnBotones() {
   document.addEventListener('pointerdown', function (e) {
-    const objetivo = e.target.closest('button, .tarjeta-emocion-magica, .tarjeta-menu-opcion, .zona-caminito-claro');
+    const objetivo = e.target.closest('button, .tarjeta-emocion-magica, .tarjeta-menu-opcion');
     if (!objetivo || objetivo.disabled) return;
 
     if (
@@ -1147,6 +1263,7 @@ function reproducirSonidoHuellita(indiceHuella = 0, nivel = 1) {
     gain.connect(ctx.destination);
     osc.start(inicio);
     osc.stop(inicio + 0.18);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
@@ -1170,6 +1287,7 @@ function reproducirSonidoMisionCompleta() {
       osc.start(inicio);
       osc.stop(inicio + 0.38);
     });
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
@@ -1192,6 +1310,7 @@ function reproducirNotaEscala(indice) {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.5);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
@@ -1217,6 +1336,7 @@ function reproducirSonidoBurbuja(dorada = false) {
     gain.connect(ctx.destination);
     osc.start(ahora);
     osc.stop(ahora + 0.14);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
@@ -1269,6 +1389,7 @@ function reproducirSonidoAgua(esPompa = false) {
     oscGain.connect(ctx.destination);
     osc.start(ahora);
     osc.stop(ahora + 0.15);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
@@ -1292,6 +1413,7 @@ function reproducirSonidoMasaje() {
     gain.connect(ctx.destination);
     osc.start(ahora);
     osc.stop(ahora + 0.21);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
@@ -1317,6 +1439,7 @@ function reproducirSonidoConstruir(progreso = 50) {
     gain.connect(ctx.destination);
     osc.start(ahora);
     osc.stop(ahora + 0.14);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
@@ -1339,12 +1462,10 @@ function reproducirSonidoCamara() {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.13);
+    suspenderAudioCtxSiLibre();
   } catch (e) {}
 }
 
-// ========================================================
-// JUEGOS PARA LAS EMOCIONES + INTRO JUEGOS
-// ========================================================
 function mostrarIntroJuegos() {
   const tarjeta = document.getElementById('tarjeta-intro-juegos');
   if (tarjeta) tarjeta.classList.remove('oculto');
@@ -1572,7 +1693,9 @@ function manejarToqueJuego(clientX, clientY, esArrastre = false) {
       activarChorroTrompa(canvas, tocoTrompa ? 1.4 : 1);
       reproducirSonidoAgua(false);
       avanzarMision(12, instruccionBase);
-      if (navigator.vibrate) navigator.vibrate(20);
+      if (navigator.vibrate) {
+        try { navigator.vibrate(20); } catch (e) {}
+      }
     } else if (chorroTrompaFrames > 0) {
       activarChorroTrompa(canvas, 0.7);
     }
@@ -1608,7 +1731,9 @@ function manejarToqueJuego(clientX, clientY, esArrastre = false) {
         b.y = canvas.height + 25;
         b.x = 45 + Math.random() * 235;
         avanzarMision(14, instruccionBase);
-        if (navigator.vibrate) navigator.vibrate(20);
+        if (navigator.vibrate) {
+          try { navigator.vibrate(20); } catch (e) {}
+        }
       }
     });
   } else if (juegoActual === 'caricia') {
@@ -1638,7 +1763,9 @@ function manejarToqueJuego(clientX, clientY, esArrastre = false) {
       } else {
         setMensajePou(`${fraseEmocion} (${actual.nombre} ${progresoCasita}%)`);
       }
-      if (navigator.vibrate) navigator.vibrate(18);
+      if (navigator.vibrate) {
+        try { navigator.vibrate(18); } catch (e) {}
+      }
     }
   } else if (juegoActual === 'ritmo' && !esArrastre) {
     const puntos = obtenerPuntosEscala();
@@ -1660,7 +1787,9 @@ function manejarToqueJuego(clientX, clientY, esArrastre = false) {
           texto: `♪ ${infoNota.nota}`,
           vida: 34
         });
-        if (navigator.vibrate) navigator.vibrate(18);
+        if (navigator.vibrate) {
+          try { navigator.vibrate(18); } catch (e) {}
+        }
       }
     });
   }
@@ -1672,7 +1801,6 @@ function configurarEventosCanvasJuego() {
   canvas.dataset.listo = '1';
 
   canvas.addEventListener('pointerdown', e => {
-    asegurarAudioCtx();
     punteroActivo = true;
     manejarToqueJuego(e.clientX, e.clientY, false);
   });
@@ -1926,9 +2054,6 @@ function iniciarLoopJuego() {
   frame();
 }
 
-// ========================================================
-// FOTOS EMOCIONALES + INTRO FOTÓGRAFO
-// ========================================================
 function mostrarIntroFotos() {
   const tarjeta = document.getElementById('tarjeta-intro-fotos');
   if (tarjeta) tarjeta.classList.remove('oculto');
@@ -2065,6 +2190,10 @@ function detenerCamaraElefante() {
     streamCamara.getTracks().forEach(track => track.stop());
     streamCamara = null;
   }
+  const video = document.getElementById('video-camara-elefante');
+  if (video && video.srcObject) {
+    video.srcObject = null;
+  }
 }
 
 async function iniciarCamaraElefante() {
@@ -2073,13 +2202,21 @@ async function iniciarCamaraElefante() {
 
   try {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      streamCamara = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
-        audio: false
-      });
-      if (video) {
+      try {
+        streamCamara = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'user' }, width: { ideal: 640 }, height: { ideal: 640 } },
+          audio: false
+        });
+      } catch (e1) {
+        streamCamara = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+      }
+
+      if (video && streamCamara) {
         video.srcObject = streamCamara;
-        await video.play();
+        await video.play().catch(() => {});
       }
     }
   } catch (err) {
@@ -2197,6 +2334,7 @@ function iniciarLoopCamara() {
 
 function tomarFotoElefante() {
   const video = document.getElementById('video-camara-elefante');
+  const canvasVivo = document.getElementById('canvas-camara-elefante');
   const panel = document.getElementById('panel-foto-capturada');
   const img = document.getElementById('img-foto-tomada');
   const enlace = document.getElementById('enlace-descarga-foto');
@@ -2217,13 +2355,16 @@ function tomarFotoElefante() {
   try {
     dataUrl = fotoCanvas.toDataURL('image/png');
   } catch (e) {
-    const soloFondo = document.createElement('canvas');
-    soloFondo.width = 325;
-    soloFondo.height = 295;
-    const sctx = soloFondo.getContext('2d');
-    dibujarFondoCamaraOEscenario(sctx, 325, 295, video, true);
     try {
-      dataUrl = soloFondo.toDataURL('image/png');
+      const respaldoCanvas = document.createElement('canvas');
+      respaldoCanvas.width = 325;
+      respaldoCanvas.height = 295;
+      const rctx = respaldoCanvas.getContext('2d');
+      dibujarFondoCamaraOEscenario(rctx, 325, 295, video, false);
+      if (canvasVivo) {
+        rctx.drawImage(canvasVivo, 0, 0, 325, 295);
+      }
+      dataUrl = respaldoCanvas.toDataURL('image/png');
     } catch (e2) {
       dataUrl = '';
     }

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Gregorio</title>
   <link id="favicon-gregorio" rel="icon" type="image/png" href="assets/images/Gregorio%20feliz.png">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -157,7 +157,7 @@
           <span class="c1">¿</span><span class="c2">Q</span><span class="c3">U</span><span class="c4">É</span> <span class="c5">T</span><span class="c6">A</span><span class="c1">N</span> <span class="c2">G</span><span class="c3">R</span><span class="c4">A</span><span class="c5">N</span><span class="c6">D</span><span class="c1">E</span> <span class="c2">E</span><span class="c3">S</span><span class="c4">?</span>
         </h2>
         <p class="subguia-dedos" id="subguia-como-poner-dedos">
-          Pon 1, 2 o 3 dedos en el caminito
+          Pon 1, 2 o 3 deditos en la pantalla
         </p>
       </div>
 
@@ -175,7 +175,7 @@
             draggable="false"
           >
           <span id="etiqueta-intensidad-dedos" class="etiqueta-intensidad-dedos">
-            1 dedo = un poco triste · 2 = medianamente triste · 3 = muy triste
+            1 dedito = un poquito triste · 2 deditos = medianamente triste · 3 deditos = muy triste
           </span>
         </div>
       </div>
@@ -210,7 +210,7 @@
         </div>
         <h3 class="titulo-ritual-actual" id="titulo-ritual-actual">La caricia de Gregorio</h3>
         <p class="texto-guia-fisico-externo-claro" id="descripcion-ritual-fisico">
-          Pon tu manito con la palma hacia arriba y acaricia tu pulgar suavemente desde la base hasta la punta.
+          Palma hacia arriba y acaricia tu pulgar despacio desde la base hasta la punta.
         </p>
       </div>
 
@@ -241,7 +241,7 @@
         </div>
       </div>
 
-      <audio id="mi-audio-gregorio" preload="auto"></audio>
+      <audio id="mi-audio-gregorio" preload="none"></audio>
 
       <button type="button" class="btn-volver-unico" onclick="irA('pantalla-menu')">
         ⬅ Volver
@@ -260,7 +260,7 @@
           onerror="this.src='assets/images/Gregorio feliz.png'"
         >
         <p class="texto-intro-seccion">
-          ¡Juguemos con Gregorio y escuchemos los sonidos de cada momento!
+          ¡Juguemos según tu emoción y escuchemos los sonidos de cada actividad!
         </p>
         <div class="acciones-intro-seccion">
           <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirIntroJuegos(this)" title="Escuchar a Gregorio">
@@ -287,13 +287,13 @@
       </div>
 
       <p class="instruccion-juego-destacada" id="guia-juego-dedos">
-        Desliza en el cuerpo de Gregorio para echarle cremita.
+        Haz un masaje suave con crema alrededor de su carita y cuerpo.
       </p>
 
       <div class="marco-visor-arcade">
         <canvas id="canvas-juego-dedos" width="325" height="310"></canvas>
         <div class="burbuja-arcade-mensaje" id="mensaje-pou-gregorio">
-          Cuando estás triste puedes ponerte cremita suave en el spa.
+          Cuando estás triste puedes hacer un masaje suave con crema.
         </div>
       </div>
 
@@ -337,7 +337,7 @@
           onerror="this.src='assets/images/Gregorio feliz.png'"
         >
         <p class="texto-intro-seccion">
-          ¡Imitemos las caritas de Gregorio frente a la cámara!
+          ¡Abre la cámara, imita las caritas de Gregorio y tómate una foto!
         </p>
         <div class="acciones-intro-seccion">
           <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirIntroFotos(this)" title="Escuchar a Gregorio">
@@ -350,14 +350,14 @@
       </div>
 
       <div class="fila-superior-camara">
-        <p class="estado-camara" id="estado-camara-texto">Imita su carita alegre</p>
+        <p class="estado-camara" id="estado-camara-texto">Sonríe con alegría y tómate una foto</p>
         <button type="button" class="btn-audio-mini" data-audio-btn onclick="reproducirAudioFotoActual(this)" title="Escuchar a Gregorio">
           🔊
         </button>
       </div>
 
       <div class="visor-camara-marco">
-        <video id="video-camara-elefante" autoplay playsinline muted style="display:none;"></video>
+        <video id="video-camara-elefante" autoplay playsinline muted></video>
         <canvas id="canvas-camara-elefante" width="325" height="295"></canvas>
 
         <div id="circulo-guia-gregorio" class="circulo-guia-gregorio grande" onclick="alternarTamanoGuiaGregorio()" title="Toca para cambiar tamaño">
@@ -397,7 +397,7 @@
     </section>
 
     <!-- Reproductor para narraciones y recomendaciones -->
-    <audio id="audio-narracion-gregorio" preload="auto"></audio>
+    <audio id="audio-narracion-gregorio" preload="none"></audio>
 
     <!-- MODAL DE MEDIACIÓN PARA ADULTOS -->
     <div id="modal-mediacion-adultos" class="modal-ficha oculto" onclick="cerrarModalMediacion(event)">
@@ -418,11 +418,8 @@
           </div>
         </div>
         <div class="contenido-ficha">
-          <p>
-            Acompañar este espacio con un adulto cercano ayuda a conversar sobre lo que se siente y a cuidar el ritmo de cada momento.
-          </p>
-          <p>
-            El botón de parlante (🔊) es para escuchar la voz de Gregorio.
+          <p id="texto-mediacion-guion">
+            Para usar esta aplicación necesitas la ayuda de un adulto. Puedes buscar a tu papá, a tu mamá o a alguna de tus profesoras. ¡Los científicos también necesitamos ayudantes!
           </p>
         </div>
       </div>
