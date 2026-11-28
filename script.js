@@ -10,13 +10,7 @@ const dedosActivosCaminito = new Set();
 let maxDedosEnGestoCaminito = 0;
 let temporizadorCierreGestoCaminito = null;
 
-let clicsPCEnCaminito = 0;
-let temporizadorClicsPC = null;
-
 const RUTA_AUDIOS = 'assets/Audios/';
-
-const TEXTO_GUION_MEDIACION =
-  'Para usar esta aplicación necesitas la ayuda de un adulto. Puedes buscar a tu papá, a tu mamá o a alguna de tus profesoras. ¡Los científicos también necesitamos ayudantes!';
 
 const AUDIOS_GENERALES = {
   bienvenida: `${RUTA_AUDIOS}Audio Bienvenida GregorioElefante.wav`,
@@ -197,7 +191,6 @@ let indiceConstruccionActual = 0;
 let progresoCasita = 0;
 
 let audioCtx = null;
-let compresorEfectos = null;
 let audioActualRuta = '';
 let audiosActivados = true;
 let notasFlotantes = [];
@@ -470,6 +463,9 @@ const RITUALES_POR_EMOCION = {
   }
 };
 
+// ========================================================
+// AUDIOS (.WAV) Y GESTIÓN DE AUDIO PARA NO CORTAR MÚSICA
+// ========================================================
 function actualizarEstadoBotonesAudio(estaSonando) {
   document.querySelectorAll('[data-audio-btn]').forEach(btn => {
     const esEste = btn.getAttribute('data-audio-activo') === 'true';
@@ -493,7 +489,7 @@ function suspenderAudioCtxSiLibre() {
     if (audioCtx && audioCtx.state === 'running') {
       audioCtx.suspend().catch(() => {});
     }
-  }, 1200);
+  }, 600);
 }
 
 function detenerNarracion() {
@@ -501,9 +497,6 @@ function detenerNarracion() {
   if (audioNar) {
     audioNar.pause();
     audioNar.currentTime = 0;
-  }
-  if (typeof window.speechSynthesis !== 'undefined') {
-    try { window.speechSynthesis.cancel(); } catch (e) {}
   }
   audioActualRuta = '';
   document.querySelectorAll('[data-audio-btn]').forEach(btn => {
@@ -513,45 +506,19 @@ function detenerNarracion() {
   suspenderAudioCtxSiLibre();
 }
 
-function hablarRespaldoTexto(texto, botonPresionado = null) {
-  if (!audiosActivados || !texto || typeof window.speechSynthesis === 'undefined') {
-    actualizarEstadoBotonesAudio(false);
-    return;
-  }
-  try {
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(texto);
-    utter.lang = 'es-ES';
-    utter.rate = 0.96;
-    utter.volume = 1.0;
-    utter.onstart = () => actualizarEstadoBotonesAudio(true);
-    utter.onend = () => actualizarEstadoBotonesAudio(false);
-    utter.onerror = () => actualizarEstadoBotonesAudio(false);
-    if (botonPresionado) {
-      botonPresionado.setAttribute('data-audio-activo', 'true');
-    }
-    window.speechSynthesis.speak(utter);
-  } catch (e) {
-    actualizarEstadoBotonesAudio(false);
-  }
-}
-
-function alternarNarracion(rutaWav, botonPresionado = null, rutasAlternativas = [], textoRespaldo = '') {
-  if (!audiosActivados || (!rutaWav && !textoRespaldo)) return;
+function alternarNarracion(rutaWav, botonPresionado = null) {
+  if (!audiosActivados || !rutaWav) return;
 
   const audioNar = document.getElementById('audio-narracion-gregorio');
   if (!audioNar) return;
 
   detenerReproductorRitual();
-  if (typeof window.speechSynthesis !== 'undefined') {
-    try { window.speechSynthesis.cancel(); } catch (e) {}
+  if (audioCtx && audioCtx.state === 'running') {
+    audioCtx.suspend().catch(() => {});
   }
 
-  const candidatos = [rutaWav, ...(Array.isArray(rutasAlternativas) ? rutasAlternativas : [])]
-    .filter(Boolean)
-    .map(r => encodeURI(r));
-
-  const esElMismo = candidatos.includes(audioActualRuta);
+  const rutaCodificada = encodeURI(rutaWav);
+  const esElMismo = audioActualRuta === rutaCodificada;
 
   document.querySelectorAll('[data-audio-btn]').forEach(btn => {
     btn.setAttribute('data-audio-activo', botonPresionado && btn === botonPresionado ? 'true' : 'false');
@@ -563,56 +530,24 @@ function alternarNarracion(rutaWav, botonPresionado = null, rutasAlternativas = 
     return;
   }
 
-  if (!candidatos.length) {
-    hablarRespaldoTexto(textoRespaldo, botonPresionado);
-    return;
-  }
-
-  let indiceCandidato = 0;
-
-  const intentarReproducir = () => {
-    const rutaActual = candidatos[indiceCandidato];
-    audioNar.pause();
-    audioNar.currentTime = 0;
-    audioNar.volume = 1.0;
-    audioNar.muted = false;
-    audioActualRuta = rutaActual;
-    audioNar.src = rutaActual;
-    audioNar.load();
-
-    const promesa = audioNar.play();
-    if (promesa && typeof promesa.then === 'function') {
-      promesa.then(() => {
-        actualizarEstadoBotonesAudio(true);
-      }).catch(() => {
-        indiceCandidato++;
-        if (indiceCandidato < candidatos.length) {
-          intentarReproducir();
-        } else if (textoRespaldo) {
-          hablarRespaldoTexto(textoRespaldo, botonPresionado);
-        } else {
-          actualizarEstadoBotonesAudio(false);
-        }
-      });
-    }
-  };
+  audioNar.pause();
+  audioNar.currentTime = 0;
+  audioActualRuta = rutaCodificada;
+  audioNar.src = rutaCodificada;
 
   audioNar.onended = () => {
     actualizarEstadoBotonesAudio(false);
   };
 
   audioNar.onerror = () => {
-    indiceCandidato++;
-    if (indiceCandidato < candidatos.length) {
-      intentarReproducir();
-    } else if (textoRespaldo) {
-      hablarRespaldoTexto(textoRespaldo, botonPresionado);
-    } else {
-      actualizarEstadoBotonesAudio(false);
-    }
+    actualizarEstadoBotonesAudio(false);
   };
 
-  intentarReproducir();
+  audioNar.play().then(() => {
+    actualizarEstadoBotonesAudio(true);
+  }).catch(() => {
+    actualizarEstadoBotonesAudio(false);
+  });
 }
 
 function toggleTodosLosAudios() {
@@ -623,8 +558,6 @@ function toggleTodosLosAudios() {
     if (audioCtx && audioCtx.state === 'running') {
       audioCtx.suspend().catch(() => {});
     }
-  } else {
-    asegurarAudioCtx();
   }
   return audiosActivados;
 }
@@ -642,16 +575,7 @@ function reproducirAudioInicio(btn = null) {
 }
 
 function reproducirAudioMediacion(btn = null) {
-  alternarNarracion(
-    'assets/Audios/Audio Padres y mediadores.wav',
-    btn,
-    [
-      'assets/Audios/Audio Padres y mediadores .wav',
-      'assets/Audios/Audio padres y mediadores.wav',
-      'assets/Audios/Audio adultos y mediacion.wav'
-    ],
-    TEXTO_GUION_MEDIACION
-  );
+  alternarNarracion(AUDIOS_GENERALES.mediacion, btn);
 }
 
 function reproducirInstruccionDedos(btn = null) {
@@ -675,364 +599,10 @@ function reproducirAudioFotoActual(btn = null) {
   alternarNarracion(AUDIOS_FOTOS_EMOCION[fotoGregorioSeleccionadaId], btn);
 }
 
-function asegurarAudioCtx() {
-  if (!audiosActivados) return null;
-  clearTimeout(temporizadorSuspenderCtx);
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) return null;
-
-  if (!audioCtx) {
-    audioCtx = new AudioContextClass();
-    compresorEfectos = audioCtx.createDynamicsCompressor();
-    compresorEfectos.threshold.setValueAtTime(-12, audioCtx.currentTime);
-    compresorEfectos.knee.setValueAtTime(10, audioCtx.currentTime);
-    compresorEfectos.ratio.setValueAtTime(8, audioCtx.currentTime);
-    compresorEfectos.attack.setValueAtTime(0.002, audioCtx.currentTime);
-    compresorEfectos.release.setValueAtTime(0.14, audioCtx.currentTime);
-    compresorEfectos.connect(audioCtx.destination);
-  }
-
-  if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
-    audioCtx.resume().catch(() => {});
-  }
-  return audioCtx;
-}
-
-function destinoFuerte(ctx) {
-  return compresorEfectos || ctx.destination;
-}
-
-function desbloquearAudioEnPrimerToque() {
-  const desbloquear = () => {
-    if (!audiosActivados) return;
-    asegurarAudioCtx();
-    const audioNar = document.getElementById('audio-narracion-gregorio');
-    if (audioNar && !audioNar.dataset.desbloqueado) {
-      audioNar.dataset.desbloqueado = '1';
-      audioNar.muted = true;
-      audioNar.volume = 1.0;
-      const p = audioNar.play();
-      if (p && typeof p.then === 'function') {
-        p.then(() => {
-          audioNar.pause();
-          audioNar.currentTime = 0;
-          audioNar.muted = false;
-        }).catch(() => {
-          audioNar.muted = false;
-        });
-      }
-    }
-  };
-  document.addEventListener('touchstart', desbloquear, { capture: true, passive: true });
-  document.addEventListener('pointerdown', desbloquear, { capture: true, passive: true });
-}
-
-function reproducirSonidoClick(tipo = 'suave') {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-
-    const ahora = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    if (tipo === 'volver') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(460, ahora);
-      osc.frequency.exponentialRampToValueAtTime(260, ahora + 0.11);
-    } else if (tipo === 'accion') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(540, ahora);
-      osc.frequency.exponentialRampToValueAtTime(820, ahora + 0.1);
-    } else {
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(620, ahora);
-      osc.frequency.exponentialRampToValueAtTime(920, ahora + 0.09);
-    }
-
-    gain.gain.setValueAtTime(0.01, ahora);
-    gain.gain.exponentialRampToValueAtTime(0.65, ahora + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.12);
-
-    osc.connect(gain);
-    gain.connect(destinoFuerte(ctx));
-    osc.start(ahora);
-    osc.stop(ahora + 0.13);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function activarSonidoEnBotones() {
-  const dispararPorEvento = e => {
-    if (!audiosActivados) return;
-    const objetivo = e.target.closest('button, .tarjeta-emocion-magica, .tarjeta-menu-opcion');
-    if (!objetivo || objetivo.disabled) return;
-
-    if (
-      objetivo.classList.contains('btn-audio-inicio') ||
-      objetivo.classList.contains('btn-audio-mini') ||
-      objetivo.hasAttribute('data-audio-btn') ||
-      objetivo.hasAttribute('data-toggle-sonido-global') ||
-      objetivo.id === 'btn-play'
-    ) {
-      return;
-    }
-
-    if (objetivo.classList.contains('btn-volver-unico') || objetivo.classList.contains('btn-cerrar-ficha')) {
-      reproducirSonidoClick('volver');
-    } else if (objetivo.classList.contains('btn-empezar-estilo') || objetivo.classList.contains('btn-disparar-foto')) {
-      reproducirSonidoClick('accion');
-    } else {
-      reproducirSonidoClick('suave');
-    }
-  };
-
-  document.addEventListener('touchstart', dispararPorEvento, { capture: true, passive: true });
-  document.addEventListener('pointerdown', dispararPorEvento, { capture: true, passive: true });
-}
-
-function reproducirSonidoHuellita(indiceHuella = 0, nivel = 1) {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-
-    const notasNivel = [440.00, 523.25, 659.25];
-    const freqBase = notasNivel[Math.min(indiceHuella, 2)] || 440.00;
-    const inicio = ctx.currentTime + indiceHuella * 0.11;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freqBase * (0.96 + nivel * 0.03), inicio);
-    osc.frequency.exponentialRampToValueAtTime(freqBase * 1.35, inicio + 0.14);
-
-    gain.gain.setValueAtTime(0.01, inicio);
-    gain.gain.exponentialRampToValueAtTime(0.65, inicio + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.001, inicio + 0.2);
-
-    osc.connect(gain);
-    gain.connect(destinoFuerte(ctx));
-    osc.start(inicio);
-    osc.stop(inicio + 0.21);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function reproducirSonidoMisionCompleta() {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-    const acordes = [523.25, 659.25, 783.99, 1046.5];
-    acordes.forEach((freq, idx) => {
-      const inicio = ctx.currentTime + idx * 0.1;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, inicio);
-      gain.gain.setValueAtTime(0.01, inicio);
-      gain.gain.exponentialRampToValueAtTime(0.7, inicio + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, inicio + 0.38);
-      osc.connect(gain);
-      gain.connect(destinoFuerte(ctx));
-      osc.start(inicio);
-      osc.stop(inicio + 0.4);
-    });
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function reproducirNotaEscala(indice) {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-    const item = ESCALA_DO_OCTAVA[indice] || ESCALA_DO_OCTAVA[0];
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(item.freq, ctx.currentTime);
-
-    gain.gain.setValueAtTime(0.01, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.72, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-
-    osc.connect(gain);
-    gain.connect(destinoFuerte(ctx));
-    osc.start();
-    osc.stop(ctx.currentTime + 0.52);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function reproducirSonidoBurbuja(dorada = false) {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-    const ahora = ctx.currentTime;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const base = dorada ? 460 : 320 + Math.random() * 140;
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(base, ahora);
-    osc.frequency.exponentialRampToValueAtTime(base * 2.9, ahora + 0.12);
-
-    gain.gain.setValueAtTime(0.01, ahora);
-    gain.gain.exponentialRampToValueAtTime(0.75, ahora + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.15);
-
-    osc.connect(gain);
-    gain.connect(destinoFuerte(ctx));
-    osc.start(ahora);
-    osc.stop(ahora + 0.16);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function reproducirSonidoAgua(esPompa = false) {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-    const ahora = ctx.currentTime;
-
-    const duracion = esPompa ? 0.15 : 0.25;
-    const bufferSize = Math.floor(ctx.sampleRate * duracion);
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-    }
-
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(esPompa ? 1600 : 1200 + Math.random() * 450, ahora);
-    filter.Q.setValueAtTime(esPompa ? 2.2 : 1.2, ahora);
-
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.01, ahora);
-    noiseGain.gain.exponentialRampToValueAtTime(0.8, ahora + 0.02);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, ahora + duracion);
-
-    noise.connect(filter);
-    filter.connect(noiseGain);
-    noiseGain.connect(destinoFuerte(ctx));
-    noise.start(ahora);
-    noise.stop(ahora + duracion + 0.01);
-
-    const osc = ctx.createOscillator();
-    const oscGain = ctx.createGain();
-    osc.type = 'sawtooth';
-    const f0 = esPompa ? 580 : 420 + Math.random() * 140;
-    osc.frequency.setValueAtTime(f0, ahora);
-    osc.frequency.exponentialRampToValueAtTime(f0 * (esPompa ? 1.8 : 0.65), ahora + 0.13);
-
-    oscGain.gain.setValueAtTime(0.01, ahora);
-    oscGain.gain.exponentialRampToValueAtTime(0.65, ahora + 0.015);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.15);
-
-    osc.connect(oscGain);
-    oscGain.connect(destinoFuerte(ctx));
-    osc.start(ahora);
-    osc.stop(ahora + 0.16);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function reproducirSonidoMasaje() {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-    const ahora = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(420, ahora);
-    osc.frequency.exponentialRampToValueAtTime(580, ahora + 0.18);
-
-    gain.gain.setValueAtTime(0.01, ahora);
-    gain.gain.exponentialRampToValueAtTime(0.6, ahora + 0.025);
-    gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.22);
-
-    osc.connect(gain);
-    gain.connect(destinoFuerte(ctx));
-    osc.start(ahora);
-    osc.stop(ahora + 0.23);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function reproducirSonidoConstruir(progreso = 50) {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-    const ahora = ctx.currentTime;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const freq = 260 + (progreso / 100) * 220;
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq * 1.5, ahora);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.7, ahora + 0.12);
-
-    gain.gain.setValueAtTime(0.01, ahora);
-    gain.gain.exponentialRampToValueAtTime(0.75, ahora + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.15);
-
-    osc.connect(gain);
-    gain.connect(destinoFuerte(ctx));
-    osc.start(ahora);
-    osc.stop(ahora + 0.16);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
-function reproducirSonidoCamara() {
-  if (!audiosActivados) return;
-  try {
-    const ctx = asegurarAudioCtx();
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(700, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.1);
-
-    gain.gain.setValueAtTime(0.01, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.7, ctx.currentTime + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
-
-    osc.connect(gain);
-    gain.connect(destinoFuerte(ctx));
-    osc.start();
-    osc.stop(ctx.currentTime + 0.15);
-    suspenderAudioCtxSiLibre();
-  } catch (e) {}
-}
-
+// ========================================================
+// BLOQUEOS Y NAVEGACIÓN
+// ========================================================
 function activarBloqueosMovilYCopia() {
-  let ultimoToque = 0;
-
-  document.addEventListener('touchstart', e => {
-    if (e.touches && e.touches.length > 1) {
-      e.preventDefault();
-    }
-    const ahora = Date.now();
-    if (ahora - ultimoToque <= 320) {
-      e.preventDefault();
-    }
-    ultimoToque = ahora;
-  }, { passive: false });
-
   document.addEventListener('contextmenu', e => {
     e.preventDefault();
   }, { capture: true });
@@ -1049,14 +619,6 @@ function activarBloqueosMovilYCopia() {
   }, { capture: true });
 
   document.addEventListener('gesturestart', e => {
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('gesturechange', e => {
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('gestureend', e => {
     e.preventDefault();
   }, { passive: false });
 
@@ -1107,10 +669,8 @@ function irA(idPantalla) {
   clearTimeout(temporizadorConteoDedos);
   clearTimeout(temporizadorReinicioMision);
   clearTimeout(temporizadorCierreGestoCaminito);
-  clearTimeout(temporizadorClicsPC);
   dedosActivosCaminito.clear();
   maxDedosEnGestoCaminito = 0;
-  clicsPCEnCaminito = 0;
 
   cancelAnimationFrame(animacionJuegoId);
   detenerNarracion();
@@ -1184,7 +744,6 @@ function seleccionarEmocion(clave, nombreBonito) {
   nivelActual = 1;
   dedosActivosCaminito.clear();
   maxDedosEnGestoCaminito = 0;
-  clicsPCEnCaminito = 0;
 
   document.getElementById('badge-emocion').textContent = nombreBonito.toUpperCase();
   document.getElementById('numero-dedos').textContent = '?';
@@ -1202,17 +761,17 @@ function crearHuellaElefanteSVG(indice) {
   huella.className = 'huella-caminito';
 
   const posicionesCamino = [
-    { x: 64,  y: 112 },
-    { x: 158, y: 68  },
-    { x: 252, y: 112 }
+    { x: 68,  y: 132 },
+    { x: 162, y: 82  },
+    { x: 256, y: 132 }
   ];
 
-  const pos = posicionesCamino[indice] || { x: 158, y: 92 };
+  const pos = posicionesCamino[indice] || { x: 162, y: 108 };
   huella.style.left = pos.x + 'px';
   huella.style.top = pos.y + 'px';
 
   huella.innerHTML = `
-    <svg viewBox="0 0 110 110" width="58" height="58">
+    <svg viewBox="0 0 110 110" width="64" height="64">
       <path d="M24 88 C18 72, 22 44, 34 34 C44 26, 66 26, 76 34 C88 44, 92 72, 86 88 C74 96, 36 96, 24 88 Z"
             fill="#fbcfe8" stroke="#db2777" stroke-width="4.5" stroke-linejoin="round"/>
       <ellipse cx="55" cy="67" rx="20" ry="14" fill="#fdf2f8" stroke="#db2777" stroke-width="2.5"/>
@@ -1303,21 +862,8 @@ function configurarZonaTactilCaminito() {
 
   zonaTactil.addEventListener('pointerdown', function (e) {
     e.preventDefault();
-    asegurarAudioCtx();
-
-    if (e.pointerType === 'mouse') {
-      clicsPCEnCaminito = (clicsPCEnCaminito % 3) + 1;
-      maxDedosEnGestoCaminito = clicsPCEnCaminito;
-      registrarCaminoDedos(clicsPCEnCaminito);
-
-      clearTimeout(temporizadorClicsPC);
-      temporizadorClicsPC = setTimeout(() => {
-        clicsPCEnCaminito = 0;
-      }, 1500);
-      return;
-    }
-
     clearTimeout(temporizadorCierreGestoCaminito);
+
     if (dedosActivosCaminito.size === 0) {
       maxDedosEnGestoCaminito = 0;
     }
@@ -1327,7 +873,6 @@ function configurarZonaTactilCaminito() {
   }, { passive: false });
 
   const liberarDedo = e => {
-    if (e.pointerType === 'mouse') return;
     dedosActivosCaminito.delete(e.pointerId);
     if (dedosActivosCaminito.size === 0) {
       clearTimeout(temporizadorCierreGestoCaminito);
@@ -1341,6 +886,9 @@ function configurarZonaTactilCaminito() {
   zonaTactil.addEventListener('pointercancel', liberarDedo, { passive: true });
 }
 
+// ========================================================
+// REPRODUCTOR EN RITUALES
+// ========================================================
 function formatearSegundos(seg) {
   const s = Math.max(0, Math.floor(seg));
   const min = Math.floor(s / 60);
@@ -1398,7 +946,6 @@ function toggleAudioPropio() {
 
   if (reproductor.getAttribute('data-track') !== rutaCodificada) {
     reproductor.src = rutaCodificada;
-    reproductor.volume = 1.0;
     reproductor.setAttribute('data-track', rutaCodificada);
     reproductor.onloadedmetadata = () => {
       actualizarBarraReproductor(reproductor.currentTime, reproductor.duration);
@@ -1428,7 +975,6 @@ function toggleAudioPropio() {
     return;
   }
 
-  reproductor.volume = 1.0;
   reproductor.play().then(() => {
     if (boton) boton.textContent = '⏸';
     if (estadoAudio) estadoAudio.textContent = 'Reproduciendo';
@@ -1521,6 +1067,332 @@ function cerrarModalFicha(event) {
   }
 }
 
+// ========================================================
+// SONIDOS WEB AUDIO API (CON LIBERACIÓN PARA MÚSICA EXTERNA)
+// ========================================================
+function asegurarAudioCtx() {
+  if (!audiosActivados) return null;
+  clearTimeout(temporizadorSuspenderCtx);
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioCtx) {
+    audioCtx = new AudioContextClass();
+  }
+  if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function desbloquearAudioEnPrimerToque() {
+  const desbloquear = () => {
+    const audioNar = document.getElementById('audio-narracion-gregorio');
+    if (audioNar && !audioNar.dataset.desbloqueado) {
+      audioNar.dataset.desbloqueado = '1';
+      audioNar.muted = true;
+      audioNar.play().then(() => {
+        audioNar.pause();
+        audioNar.currentTime = 0;
+        audioNar.muted = false;
+      }).catch(() => {
+        audioNar.muted = false;
+      });
+    }
+  };
+  document.addEventListener('pointerdown', desbloquear, { passive: true });
+}
+
+function reproducirSonidoClick(tipo = 'suave') {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+
+    const ahora = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    if (tipo === 'volver') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(420, ahora);
+      osc.frequency.exponentialRampToValueAtTime(290, ahora + 0.07);
+    } else if (tipo === 'accion') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(480, ahora);
+      osc.frequency.exponentialRampToValueAtTime(640, ahora + 0.065);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, ahora);
+      osc.frequency.exponentialRampToValueAtTime(700, ahora + 0.055);
+    }
+
+    gain.gain.setValueAtTime(0.001, ahora);
+    gain.gain.exponentialRampToValueAtTime(0.075, ahora + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ahora + 0.08);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ahora);
+    osc.stop(ahora + 0.09);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function activarSonidoEnBotones() {
+  document.addEventListener('pointerdown', function (e) {
+    const objetivo = e.target.closest('button, .tarjeta-emocion-magica, .tarjeta-menu-opcion');
+    if (!objetivo || objetivo.disabled) return;
+
+    if (
+      objetivo.classList.contains('btn-audio-inicio') ||
+      objetivo.classList.contains('btn-audio-mini') ||
+      objetivo.hasAttribute('data-audio-btn') ||
+      objetivo.hasAttribute('data-toggle-sonido-global') ||
+      objetivo.id === 'btn-play'
+    ) {
+      return;
+    }
+
+    if (objetivo.classList.contains('btn-volver-unico') || objetivo.classList.contains('btn-cerrar-ficha')) {
+      reproducirSonidoClick('volver');
+    } else if (objetivo.classList.contains('btn-empezar-estilo') || objetivo.classList.contains('btn-disparar-foto')) {
+      reproducirSonidoClick('accion');
+    } else {
+      reproducirSonidoClick('suave');
+    }
+  }, { capture: true, passive: true });
+}
+
+function reproducirSonidoHuellita(indiceHuella = 0, nivel = 1) {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+
+    const notasNivel = [392.00, 440.00, 523.25];
+    const freqBase = notasNivel[Math.min(indiceHuella, 2)] || 392.00;
+    const inicio = ctx.currentTime + indiceHuella * 0.11;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freqBase * (0.95 + nivel * 0.03), inicio);
+    osc.frequency.exponentialRampToValueAtTime(freqBase * 1.25, inicio + 0.11);
+
+    gain.gain.setValueAtTime(0.001, inicio);
+    gain.gain.exponentialRampToValueAtTime(0.18, inicio + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.17);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(inicio);
+    osc.stop(inicio + 0.18);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function reproducirSonidoMisionCompleta() {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+    const acordes = [523.25, 659.25, 783.99, 1046.5];
+    acordes.forEach((freq, idx) => {
+      const inicio = ctx.currentTime + idx * 0.1;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, inicio);
+      gain.gain.setValueAtTime(0.001, inicio);
+      gain.gain.exponentialRampToValueAtTime(0.24, inicio + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.36);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(inicio);
+      osc.stop(inicio + 0.38);
+    });
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function reproducirNotaEscala(indice) {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+    const item = ESCALA_DO_OCTAVA[indice] || ESCALA_DO_OCTAVA[0];
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(item.freq, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.48);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function reproducirSonidoBurbuja(dorada = false) {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+    const ahora = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const base = dorada ? 420 : 280 + Math.random() * 120;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(base, ahora);
+    osc.frequency.exponentialRampToValueAtTime(base * 2.8, ahora + 0.11);
+
+    gain.gain.setValueAtTime(0.001, ahora);
+    gain.gain.exponentialRampToValueAtTime(0.32, ahora + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ahora + 0.13);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ahora);
+    osc.stop(ahora + 0.14);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function reproducirSonidoAgua(esPompa = false) {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+    const ahora = ctx.currentTime;
+
+    const duracion = esPompa ? 0.14 : 0.24;
+    const bufferSize = Math.floor(ctx.sampleRate * duracion);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(esPompa ? 1500 : 1100 + Math.random() * 450, ahora);
+    filter.Q.setValueAtTime(esPompa ? 2.4 : 1.3, ahora);
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.001, ahora);
+    noiseGain.gain.exponentialRampToValueAtTime(esPompa ? 0.24 : 0.34, ahora + 0.02);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, ahora + duracion);
+
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(ahora);
+    noise.stop(ahora + duracion + 0.01);
+
+    const osc = ctx.createOscillator();
+    const oscGain = ctx.createGain();
+    osc.type = 'sine';
+    const f0 = esPompa ? 540 : 380 + Math.random() * 140;
+    osc.frequency.setValueAtTime(f0, ahora);
+    osc.frequency.exponentialRampToValueAtTime(f0 * (esPompa ? 1.7 : 0.68), ahora + 0.12);
+
+    oscGain.gain.setValueAtTime(0.001, ahora);
+    oscGain.gain.exponentialRampToValueAtTime(0.2, ahora + 0.015);
+    oscGain.gain.exponentialRampToValueAtTime(0.0001, ahora + 0.14);
+
+    osc.connect(oscGain);
+    oscGain.connect(ctx.destination);
+    osc.start(ahora);
+    osc.stop(ahora + 0.15);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function reproducirSonidoMasaje() {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+    const ahora = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(360, ahora);
+    osc.frequency.exponentialRampToValueAtTime(460, ahora + 0.16);
+
+    gain.gain.setValueAtTime(0.001, ahora);
+    gain.gain.exponentialRampToValueAtTime(0.16, ahora + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ahora + 0.2);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ahora);
+    osc.stop(ahora + 0.21);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function reproducirSonidoConstruir(progreso = 50) {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+    const ahora = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = 220 + (progreso / 100) * 180;
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq * 1.45, ahora);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.72, ahora + 0.11);
+
+    gain.gain.setValueAtTime(0.001, ahora);
+    gain.gain.exponentialRampToValueAtTime(0.34, ahora + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ahora + 0.13);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ahora);
+    osc.stop(ahora + 0.14);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+function reproducirSonidoCamara() {
+  if (!audiosActivados) return;
+  try {
+    const ctx = asegurarAudioCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(660, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.09);
+
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.13);
+    suspenderAudioCtxSiLibre();
+  } catch (e) {}
+}
+
+// ========================================================
+// JUEGOS PARA LAS EMOCIONES + INTRO JUEGOS
+// ========================================================
 function mostrarIntroJuegos() {
   const tarjeta = document.getElementById('tarjeta-intro-juegos');
   if (tarjeta) tarjeta.classList.remove('oculto');
@@ -1740,8 +1612,6 @@ function manejarToqueJuego(clientX, clientY, esArrastre = false) {
   const instruccionBase = INSTRUCCIONES_JUEGO[juegoActual] || '';
   const fraseEmocion = FRASE_EMOCION_JUEGO[juegoActual] || '';
 
-  asegurarAudioCtx();
-
   if (juegoActual === 'ducha') {
     const trompa = obtenerZonaTrompa(canvas);
     const tocoTrompa = Math.hypot(x - trompa.x, y - trompa.y) <= trompa.radio + 14;
@@ -1801,7 +1671,7 @@ function manejarToqueJuego(clientX, clientY, esArrastre = false) {
       alpha: 0.72
     });
     if (capasCrema.length > 55) capasCrema.shift();
-    if (!esArrastre || Math.random() < 0.3) {
+    if (!esArrastre || Math.random() < 0.25) {
       reproducirSonidoMasaje();
     }
     avanzarMision(esArrastre ? 4 : 8, instruccionBase);
@@ -1858,19 +1728,18 @@ function configurarEventosCanvasJuego() {
   canvas.dataset.listo = '1';
 
   canvas.addEventListener('pointerdown', e => {
-    e.preventDefault();
     punteroActivo = true;
     manejarToqueJuego(e.clientX, e.clientY, false);
-  }, { passive: false });
+  });
 
   canvas.addEventListener('pointermove', e => {
     if (!punteroActivo && e.pointerType === 'mouse') return;
     manejarToqueJuego(e.clientX, e.clientY, true);
-  }, { passive: true });
+  });
 
   window.addEventListener('pointerup', () => {
     punteroActivo = false;
-  }, { passive: true });
+  });
 }
 
 function iniciarLoopJuego() {
@@ -2112,6 +1981,9 @@ function iniciarLoopJuego() {
   frame();
 }
 
+// ========================================================
+// FOTOS EMOCIONALES + INTRO FOTÓGRAFO
+// ========================================================
 function mostrarIntroFotos() {
   const tarjeta = document.getElementById('tarjeta-intro-fotos');
   if (tarjeta) tarjeta.classList.remove('oculto');

@@ -1,4 +1,5 @@
 :root {
+  /* Paleta base inspirada en las ilustraciones: lila/lavanda, rosa mejilla, durazno/crema y pradera */
   --rosa-firma: #f472b6;
   --rosa-borde: #f9a8d4;
   --rosa-suave: #fce7f3;
@@ -23,7 +24,6 @@ body {
   overflow: hidden;
   overscroll-behavior: none;
   touch-action: none;
-  -ms-touch-action: none;
 }
 
 *,
@@ -37,7 +37,6 @@ body {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
-  touch-action: none;
 }
 
 img {
@@ -76,36 +75,45 @@ a,
   cursor: pointer;
 }
 
+button,
+a,
+.tarjeta-emocion-magica,
+.tarjeta-menu-opcion,
+.tarjeta-foto-gregorio,
+.circulo-guia-gregorio,
+.tarjeta-cara-intensidad,
+.barra-tiempo-wrapper {
+  touch-action: manipulation;
+}
+
 .celular {
   width: 375px;
   height: 740px;
   background-color: #fffdf9;
   border-radius: 45px;
-  box-shadow: 0 25px 50px rgba(51, 39, 66, 0.22);
+  box-shadow: 0 25px 50px rgba(51, 39, 66, 0.2);
   overflow: hidden;
   position: relative;
   border: 7px solid var(--rosa-borde);
   overscroll-behavior: none;
-  transform-origin: center center;
 }
 
 @media (max-width: 480px) {
   body {
-    padding: 8px;
-    background: linear-gradient(145deg, #fce7f3 0%, #ede9fe 48%, #dcfce7 100%);
+    padding: 0;
+    background: #fffdf9;
   }
 
   .celular {
-    width: calc(100vw - 16px);
-    height: calc(100dvh - 16px);
-    max-width: 375px;
-    max-height: 740px;
-    border-radius: 32px;
-    border: 5px solid var(--rosa-borde);
-    box-shadow: 0 12px 28px rgba(51, 39, 66, 0.2);
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
 }
 
+/* Tipografía multicolor infantil */
 .c1 { color: #e05a47; }
 .c2 { color: #f48c06; }
 .c3 { color: #e0a800; }
@@ -117,12 +125,12 @@ a,
   display: none;
   width: 100%;
   height: 100%;
-  padding: 12px;
+  padding: 14px;
   flex-direction: column;
   align-items: center;
   text-align: center;
   justify-content: space-between;
-  animation: aparecer 0.2s ease-out;
+  animation: aparecer 0.25s ease-out;
   overflow: hidden;
   position: relative;
   z-index: 1;
@@ -133,18 +141,19 @@ a,
 }
 
 @keyframes aparecer {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
+/* Botón único inferior Volver */
 .btn-volver-unico {
   width: 100%;
   background: #ffffff;
   color: var(--texto-oscuro);
   border: 2.5px solid var(--rosa-borde);
   border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 13.5px;
+  padding: 9px 16px;
+  font-size: 14px;
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(244, 114, 182, 0.14);
   flex-shrink: 0;
@@ -157,6 +166,7 @@ a,
   transform: translateY(2px);
 }
 
+/* Parlantes más visibles y fáciles de tocar */
 .btn-ayuda-mini,
 .btn-audio-mini {
   width: 40px;
@@ -200,6 +210,7 @@ a,
   50% { transform: scale(1.06); }
 }
 
+/* 1. INICIO SIN TAPAR A GREGORIO */
 #pantalla-inicio {
   padding: 0;
   justify-content: flex-end;
@@ -213,7 +224,7 @@ a,
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  padding: 0 16px 16px 16px;
+  padding: 0 18px 18px 18px;
 }
 
 .imagen-bienvenida {
@@ -244,13 +255,13 @@ a,
   align-items: center;
   gap: 6px;
   padding: 0;
-  width: 86%;
+  width: 84%;
   background: transparent;
 }
 
 .btn-audio-inicio {
   width: auto;
-  background: rgba(255, 253, 249, 0.94);
+  background: rgba(255, 253, 249, 0.92);
   color: var(--texto-oscuro);
   border: 2px solid var(--rosa-borde);
   border-radius: 999px;
@@ -266,15 +277,15 @@ a,
   background: linear-gradient(90deg, #f472b6 0%, #c084fc 100%);
   border: 2.5px solid #ffffff;
   border-radius: 999px;
-  padding: 9px 20px;
-  font-size: 15.5px;
+  padding: 10px 22px;
+  font-size: 16px;
   font-weight: 700;
   color: #ffffff;
   box-shadow: 0 6px 16px rgba(51, 39, 66, 0.24);
 }
 
 .btn-mediacion-adultos {
-  background: rgba(255, 253, 249, 0.9);
+  background: rgba(255, 253, 249, 0.86);
   color: var(--texto-oscuro);
   border: 1.5px solid var(--rosa-borde);
   border-radius: 999px;
@@ -283,6 +294,7 @@ a,
   font-weight: 700;
 }
 
+/* Tarjetas introductorias con imagen protagonista */
 .tarjeta-intro-seccion {
   position: absolute;
   inset: 0;
@@ -291,13 +303,13 @@ a,
     radial-gradient(circle at 15% 12%, rgba(249, 168, 212, 0.45) 0%, transparent 45%),
     radial-gradient(circle at 88% 85%, rgba(196, 181, 253, 0.42) 0%, transparent 48%),
     linear-gradient(180deg, #fffdf9 0%, #fdf2f8 100%);
-  padding: 16px 14px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .tarjeta-intro-seccion.oculto {
@@ -305,34 +317,34 @@ a,
 }
 
 .titulo-intro-seccion {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--texto-oscuro);
   background: #ffffff;
   border: 2.5px solid var(--rosa-borde);
   border-radius: 999px;
-  padding: 6px 16px;
+  padding: 6px 18px;
 }
 
 .imagen-intro-seccion {
-  width: min(220px, 32vh);
-  height: min(220px, 32vh);
+  width: 254px;
+  height: 254px;
   object-fit: cover;
-  border-radius: 28px;
+  border-radius: 32px;
   background: #ffffff;
   border: 4px solid var(--rosa-borde);
-  box-shadow: 0 12px 24px rgba(244, 114, 182, 0.22);
+  box-shadow: 0 14px 28px rgba(244, 114, 182, 0.22);
 }
 
 .texto-intro-seccion {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--texto-oscuro);
-  line-height: 1.3;
+  line-height: 1.35;
   background: #ffffff;
   border: 2px solid var(--lila-borde);
-  border-radius: 20px;
-  padding: 9px 12px;
+  border-radius: 22px;
+  padding: 10px 14px;
   width: 100%;
 }
 
@@ -346,9 +358,10 @@ a,
 
 .acciones-intro-seccion .btn-empezar-estilo {
   width: auto;
-  padding: 9px 22px;
+  padding: 10px 24px;
 }
 
+/* PALETAS POR SECCIÓN */
 .seccion-menu {
   background:
     radial-gradient(circle at 15% 12%, rgba(249, 168, 212, 0.34) 0%, transparent 42%),
@@ -380,16 +393,17 @@ a,
   background:
     radial-gradient(circle at 15% 15%, rgba(249, 168, 212, 0.3) 0%, transparent 45%),
     linear-gradient(180deg, var(--cielo-suave) 0%, #fffdf9 52%, var(--pradera-suave) 100%);
-  gap: 5px;
+  gap: 6px;
 }
 
 .seccion-camara {
   background:
     radial-gradient(circle at 15% 15%, rgba(249, 168, 212, 0.35) 0%, transparent 45%),
     linear-gradient(180deg, var(--cielo-suave) 0%, var(--dorado-suave) 100%);
-  gap: 5px;
+  gap: 6px;
 }
 
+/* 2. MENÚ ÚNICO */
 .barra-sonido-superior {
   width: 100%;
   display: flex;
@@ -403,8 +417,8 @@ a,
   color: var(--texto-oscuro);
   border: 2px solid var(--rosa-borde);
   border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 12px;
+  padding: 5px 13px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
@@ -418,22 +432,22 @@ a,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .avatar-menu-grande {
-  width: min(104px, 14vh);
-  height: min(104px, 14vh);
-  border-radius: 26px;
+  width: 116px;
+  height: 116px;
+  border-radius: 30px;
   object-fit: contain;
   background: #ffffff;
-  border: 3.5px solid var(--rosa-borde);
-  padding: 5px;
-  box-shadow: 0 8px 18px rgba(244, 114, 182, 0.16);
+  border: 4px solid var(--rosa-borde);
+  padding: 6px;
+  box-shadow: 0 10px 20px rgba(244, 114, 182, 0.16);
 }
 
 .titulo-multicolor-grande {
-  font-size: clamp(18px, 2.8vh, 22px);
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: 0.4px;
@@ -444,21 +458,21 @@ a,
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   position: relative;
   z-index: 3;
 }
 
 .tarjeta-menu-opcion {
   width: 100%;
-  border-radius: 22px;
-  padding: 13px 14px;
+  border-radius: 26px;
+  padding: 18px 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   text-align: left;
-  box-shadow: 0 5px 0 var(--texto-oscuro);
-  border: 2.5px solid var(--texto-oscuro);
+  box-shadow: 0 6px 0 var(--texto-oscuro);
+  border: 3px solid var(--texto-oscuro);
   transition: transform 0.12s ease;
 }
 
@@ -479,12 +493,12 @@ a,
 }
 
 .icono-opcion {
-  font-size: 26px;
+  font-size: 30px;
   line-height: 1;
   background: #ffffff;
-  width: 46px;
-  height: 46px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -493,16 +507,17 @@ a,
 }
 
 .texto-opcion {
-  font-size: 15.5px;
+  font-size: 16.5px;
   font-weight: 700;
   color: var(--texto-oscuro);
   line-height: 1.2;
 }
 
+/* 3. EMOCIONES */
 .cuadricula-marcos-magicos {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 6px 8px;
+  gap: 8px 10px;
   width: 100%;
   justify-items: center;
   position: relative;
@@ -516,12 +531,12 @@ a,
 
 .tarjeta-emocion-magica {
   width: 100%;
-  border-radius: 20px;
-  padding: 4px 4px 6px 4px;
+  border-radius: 24px;
+  padding: 5px 5px 7px 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
   transition: transform 0.12s ease;
 }
 
@@ -531,30 +546,30 @@ a,
 
 .emo-tristeza {
   background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
-  border: 2.5px solid #1e3a8a;
+  border: 3px solid #1e3a8a;
 }
 .emo-rabia {
   background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%);
-  border: 2.5px solid #881337;
+  border: 3px solid #881337;
 }
 .emo-alegria {
   background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
-  border: 2.5px solid #92400e;
+  border: 3px solid #92400e;
 }
 .emo-miedo {
   background: linear-gradient(180deg, #c084fc 0%, #7e22ce 100%);
-  border: 2.5px solid #3b0764;
+  border: 3px solid #3b0764;
 }
 .emo-asco {
   background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
-  border: 2.5px solid #14532d;
+  border: 3px solid #14532d;
 }
 
 .interior-tarjeta-emocion {
   width: 100%;
-  height: clamp(58px, 9.5vh, 74px);
+  height: 76px;
   background-color: #fffcf5;
-  border-radius: 16px;
+  border-radius: 19px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -565,9 +580,9 @@ a,
 .etiqueta-emocion-magica {
   color: #ffffff;
   font-weight: 700;
-  font-size: 12px;
-  margin-top: 3px;
-  letter-spacing: 0.5px;
+  font-size: 13px;
+  margin-top: 4px;
+  letter-spacing: 0.6px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
@@ -576,14 +591,15 @@ a,
   height: 100%;
   object-fit: contain;
   padding: 2px;
-  transform: scale(1.08);
+  transform: scale(1.12);
 }
 
+/* 4. DEDOS */
 .header-bosque {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   width: 100%;
 }
 
@@ -597,28 +613,28 @@ a,
 .pildora-emocion-clara {
   background-color: #ffffff;
   color: var(--texto-oscuro);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 16px;
-  border: 2px solid var(--rosa-borde);
+  padding: 5px 14px;
+  border-radius: 18px;
+  border: 2.5px solid var(--rosa-borde);
 }
 
 .titulo-bosque-grande-claro {
-  font-size: clamp(18px, 2.8vh, 22px);
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: 0.4px;
 }
 
 .subguia-dedos {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--texto-oscuro);
   background: rgba(255, 255, 255, 0.92);
   border: 2px solid var(--pradera-borde);
   border-radius: 999px;
-  padding: 3px 10px;
+  padding: 4px 12px;
 }
 
 .medidor-intensidad-dedos {
@@ -626,19 +642,19 @@ a,
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .orbe-magico-contador-claro {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   background: radial-gradient(circle, var(--rosa-suave) 0%, var(--rosa-firma) 100%);
-  border: 3.5px solid #ffffff;
+  border: 4px solid #ffffff;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
   color: #ffffff;
   box-shadow: 0 8px 20px rgba(244, 114, 182, 0.28);
@@ -653,20 +669,20 @@ a,
 .tarjeta-cara-intensidad {
   flex: 1;
   background: #ffffff;
-  border: 2.5px solid var(--rosa-borde);
-  border-radius: 20px;
-  padding: 6px 8px;
+  border: 3px solid var(--rosa-borde);
+  border-radius: 22px;
+  padding: 7px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .img-cara-intensidad {
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   object-fit: contain;
-  border-radius: 14px;
+  border-radius: 16px;
   transition: transform 0.2s ease;
 }
 
@@ -678,33 +694,34 @@ a,
   background: var(--rosa-suave);
   color: var(--texto-oscuro);
   border: 1.5px solid var(--rosa-borde);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.2;
-  padding: 3px 8px;
-  border-radius: 12px;
+  line-height: 1.25;
+  padding: 4px 9px;
+  border-radius: 14px;
 }
 
 .zona-caminito-claro {
   width: 100%;
-  height: clamp(150px, 24vh, 210px);
+  height: 212px;
   background: rgba(255, 255, 255, 0.95);
-  border: 3px dashed var(--pradera-borde);
-  border-radius: 24px;
+  border: 3.5px dashed var(--pradera-borde);
+  border-radius: 28px;
   position: relative;
   z-index: 3;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  touch-action: none;
   overflow: hidden;
 }
 
 .sendero-musgo-claro {
   position: absolute;
   width: 86%;
-  height: 112px;
-  border: 3px dotted var(--rosa-borde);
+  height: 124px;
+  border: 3.5px dotted var(--rosa-borde);
   border-radius: 50%;
   opacity: 0.85;
   pointer-events: none;
@@ -721,8 +738,8 @@ a,
 
 .huella-caminito {
   position: absolute;
-  width: 58px;
-  height: 58px;
+  width: 64px;
+  height: 64px;
   transform: translate(-50%, -50%) scale(0);
   animation: saltarHuellaMagica 0.35s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -731,22 +748,23 @@ a,
   to { transform: translate(-50%, -50%) scale(1); }
 }
 
+/* 5. RITUAL ESTILO REPRODUCTOR PROPIO CON IMAGEN PROTAGONISTA */
 .pantalla-spotify {
   justify-content: space-between;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px 16px;
 }
 
 .caratula-elefante-grande {
   position: relative;
-  width: clamp(170px, 28vh, 260px);
-  height: clamp(170px, 28vh, 260px);
-  margin: 0 auto;
+  width: clamp(248px, 38vh, 286px);
+  height: clamp(248px, 38vh, 286px);
+  margin: 2px auto;
   background: #ffffff;
-  border: 3.5px solid var(--rosa-borde);
-  border-radius: 30px;
+  border: 4px solid var(--rosa-borde);
+  border-radius: 36px;
   overflow: hidden;
-  box-shadow: 0 12px 24px rgba(244, 114, 182, 0.22);
+  box-shadow: 0 16px 32px rgba(244, 114, 182, 0.24), 0 0 0 5px var(--lila-suave);
   flex-shrink: 0;
 }
 
@@ -762,7 +780,7 @@ a,
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 5px;
   text-align: left;
 }
 
@@ -775,55 +793,57 @@ a,
 }
 
 .pildora-ritual {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   color: var(--texto-oscuro);
   background: linear-gradient(90deg, var(--rosa-suave) 0%, var(--lila-suave) 100%);
   border: 2px solid var(--rosa-borde);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 3px 12px;
 }
 
 .estado-audio-pill {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--texto-oscuro);
   background: var(--pradera-suave);
   border: 1.5px solid var(--pradera-borde);
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
 }
 
 .titulo-ritual-actual {
-  font-size: 16px;
+  font-size: 17.5px;
   font-weight: 700;
   color: var(--texto-oscuro);
   line-height: 1.15;
 }
 
 .texto-guia-fisico-externo-claro {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--texto-oscuro);
   background: rgba(255, 255, 255, 0.96);
   border: 2px solid var(--rosa-borde);
   border-left: 5px solid var(--rosa-firma);
-  padding: 6px 10px;
-  border-radius: 14px;
+  padding: 7px 11px;
+  border-radius: 16px;
   width: 100%;
-  line-height: 1.25;
+  line-height: 1.3;
   font-weight: 600;
+  box-shadow: 0 4px 12px rgba(249, 168, 212, 0.25);
 }
 
 .reproductor-musica-card {
   width: 100%;
   background: rgba(255, 255, 255, 0.97);
   border: 2.5px solid var(--rosa-borde);
-  border-radius: 24px;
-  padding: 8px 12px;
+  border-radius: 28px;
+  padding: 10px 14px 11px 14px;
+  box-shadow: 0 10px 24px rgba(244, 114, 182, 0.16);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   flex-shrink: 0;
   position: relative;
   z-index: 3;
@@ -833,7 +853,7 @@ a,
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .barra-tiempo-fondo {
@@ -857,7 +877,7 @@ a,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #6b5b7b;
 }
@@ -866,14 +886,14 @@ a,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4px;
+  padding: 0 6px;
   gap: 8px;
 }
 
 .btn-control-player,
 .btn-ficha-adulto {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -892,30 +912,31 @@ a,
   background: var(--rosa-suave);
   border: 2px solid var(--rosa-borde);
   color: var(--texto-oscuro);
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 .btn-play-verde-claro {
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: linear-gradient(180deg, #f472b6 0%, #ec4899 100%);
-  border: 3px solid #ffffff;
+  border: 3.5px solid #ffffff;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 19px;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 6px 14px rgba(236, 72, 153, 0.34);
+  box-shadow: 0 8px 18px rgba(236, 72, 153, 0.34);
 }
 
 .btn-ficha-adulto {
   background: var(--dorado-suave);
   border: 2px solid var(--dorado-borde);
   color: var(--texto-oscuro);
-  font-size: 14px;
+  font-size: 15px;
 }
 
+/* 6. JUEGOS */
 .hud-arcade-superior {
   width: 100%;
   display: flex;
@@ -933,14 +954,14 @@ a,
   justify-content: space-between;
   gap: 6px;
   background: #ffffff;
-  border: 2px solid var(--pradera-borde);
+  border: 2.5px solid var(--pradera-borde);
   border-radius: 999px;
-  padding: 4px 9px;
+  padding: 5px 10px;
 }
 
 .barra-arcade-fondo {
   flex: 1;
-  height: 9px;
+  height: 10px;
   background: var(--pradera-suave);
   border-radius: 8px;
   overflow: hidden;
@@ -956,20 +977,20 @@ a,
 }
 
 .porcentaje-mision {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--texto-oscuro);
-  min-width: 30px;
+  min-width: 32px;
   text-align: right;
 }
 
 .instruccion-juego-destacada {
   width: 100%;
   background: #ffffff;
-  border: 2px solid var(--rosa-borde);
-  border-radius: 14px;
-  padding: 5px 9px;
-  font-size: 11.5px;
+  border: 2.5px solid var(--rosa-borde);
+  border-radius: 15px;
+  padding: 6px 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--texto-oscuro);
 }
@@ -979,10 +1000,10 @@ a,
   z-index: 3;
   width: 100%;
   background: #ffffff;
-  border: 2.5px solid var(--texto-oscuro);
-  border-radius: 22px;
-  padding: 4px 4px 10px 4px;
-  box-shadow: 0 4px 0 var(--texto-oscuro);
+  border: 3px solid var(--texto-oscuro);
+  border-radius: 26px;
+  padding: 5px 5px 12px 5px;
+  box-shadow: 0 6px 0 var(--texto-oscuro);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -991,32 +1012,33 @@ a,
 #canvas-juego-dedos {
   width: 100%;
   max-width: 325px;
-  height: clamp(190px, 31vh, 290px);
+  height: 300px;
   background: linear-gradient(180deg, var(--cielo-suave) 0%, var(--pradera-suave) 100%);
-  border: 2px solid var(--pradera-borde);
-  border-radius: 18px;
+  border: 2.5px solid var(--pradera-borde);
+  border-radius: 20px;
+  touch-action: none;
 }
 
 .burbuja-arcade-mensaje {
-  margin-top: -8px;
+  margin-top: -10px;
   background: var(--rosa-suave);
-  border: 2px solid var(--texto-oscuro);
+  border: 2.5px solid var(--texto-oscuro);
   color: var(--texto-oscuro);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 14px;
+  padding: 5px 11px;
+  border-radius: 16px;
   text-align: center;
-  box-shadow: 0 2px 0 var(--texto-oscuro);
+  box-shadow: 0 3px 0 var(--texto-oscuro);
   pointer-events: none;
 }
 
 .selector-emociones-juego {
   width: 100%;
   background: var(--texto-oscuro);
-  border: 2.5px solid var(--rosa-borde);
-  border-radius: 20px;
-  padding: 4px 3px;
+  border: 3px solid var(--rosa-borde);
+  border-radius: 22px;
+  padding: 5px 4px;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -1028,23 +1050,23 @@ a,
 .arcade-btn {
   background: #534366;
   border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 3px 2px;
+  border-radius: 14px;
+  padding: 4px 3px;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   color: #ffffff;
 }
 
 .arcade-btn span {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.1;
 }
 
 .arcade-btn small {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -1054,6 +1076,7 @@ a,
   border-color: #ffffff;
 }
 
+/* 7. FOTOS EMOCIONALES */
 .fila-superior-camara {
   width: 100%;
   display: flex;
@@ -1067,73 +1090,75 @@ a,
   flex: 1;
   background: #ffffff;
   color: var(--texto-oscuro);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 999px;
-  border: 2px solid var(--rosa-borde);
+  border: 2.5px solid var(--rosa-borde);
 }
 
 .visor-camara-marco {
   position: relative;
   z-index: 3;
   width: 100%;
-  height: clamp(190px, 31vh, 285px);
+  height: 295px;
   background: #ffffff;
-  border: 3px solid var(--rosa-borde);
-  border-radius: 22px;
+  border: 3.5px solid var(--rosa-borde);
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 4px 0 var(--texto-oscuro);
+  box-shadow: 0 5px 0 var(--texto-oscuro);
 }
 
 #canvas-camara-elefante {
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: none;
 }
 
 .circulo-guia-gregorio {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
-  width: 108px;
-  height: 108px;
+  right: 10px;
+  bottom: 10px;
+  width: 132px;
+  height: 132px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffffff 0%, var(--rosa-suave) 100%);
-  border: 3px solid var(--rosa-firma);
-  box-shadow: 0 4px 12px rgba(51, 39, 66, 0.25);
+  border: 4px solid var(--rosa-firma);
+  box-shadow: 0 6px 16px rgba(51, 39, 66, 0.25);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 4px;
+  padding: 6px;
   z-index: 4;
+  transition: width 0.2s ease, height 0.2s ease;
 }
 
 .circulo-guia-gregorio.grande {
-  width: 124px;
-  height: 124px;
+  width: 150px;
+  height: 150px;
 }
 
 .circulo-guia-gregorio img {
-  width: 78px;
-  height: 78px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
   border-radius: 50%;
 }
 
 .circulo-guia-gregorio.grande img {
-  width: 90px;
-  height: 90px;
+  width: 112px;
+  height: 112px;
 }
 
 .etiqueta-guia-gregorio {
   margin-top: 2px;
   background: var(--texto-oscuro);
   color: #ffffff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 1px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
 }
 
@@ -1156,10 +1181,10 @@ a,
 .marco-foto-con-logo {
   position: relative;
   width: 100%;
-  height: calc(100% - 40px);
-  border-radius: 14px;
+  height: 242px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 2.5px solid var(--rosa-borde);
+  border: 3px solid var(--rosa-borde);
 }
 
 .marco-foto-con-logo img {
@@ -1169,16 +1194,16 @@ a,
 }
 
 #panel-foto-capturada .logo-en-captura {
-  width: 96px;
-  height: 96px;
-  right: 6px;
-  bottom: 6px;
-  padding: 3px;
+  width: 112px;
+  height: 112px;
+  right: 8px;
+  bottom: 8px;
+  padding: 4px;
 }
 
 #panel-foto-capturada .logo-en-captura img {
-  width: 66px;
-  height: 66px;
+  width: 78px;
+  height: 78px;
 }
 
 .acciones-foto-tomada {
@@ -1190,10 +1215,10 @@ a,
 
 .btn-guardar-foto,
 .btn-otra-foto {
-  border: 2px solid #ffffff;
-  border-radius: 14px;
-  padding: 5px 12px;
-  font-size: 12px;
+  border: 2.5px solid #ffffff;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 13px;
   font-weight: 700;
   text-decoration: none;
   display: inline-flex;
@@ -1214,15 +1239,15 @@ a,
 
 .galeria-gregorio-subidas {
   width: 100%;
-  min-height: 68px;
+  min-height: 78px;
   background: rgba(255, 255, 255, 0.96);
-  border: 2px solid var(--rosa-borde);
-  border-radius: 16px;
-  padding: 4px;
+  border: 2.5px solid var(--rosa-borde);
+  border-radius: 18px;
+  padding: 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   position: relative;
   z-index: 3;
 }
@@ -1235,8 +1260,8 @@ a,
   gap: 2px;
   background: #fffdf9;
   border: 2px solid var(--lila-borde);
-  border-radius: 11px;
-  padding: 3px 2px;
+  border-radius: 12px;
+  padding: 4px 2px;
 }
 
 .tarjeta-foto-gregorio.activa {
@@ -1246,27 +1271,27 @@ a,
 }
 
 .tarjeta-foto-gregorio img {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
   object-fit: contain;
 }
 
 .tarjeta-foto-gregorio small {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--texto-oscuro);
 }
 
 .btn-disparar-foto {
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: linear-gradient(90deg, #f472b6 0%, #c084fc 100%);
-  border: 3px solid #ffffff;
+  border: 3.5px solid #ffffff;
   color: #ffffff;
-  font-size: 20px;
-  box-shadow: 0 3px 0 var(--texto-oscuro);
+  font-size: 22px;
+  box-shadow: 0 4px 0 var(--texto-oscuro);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1274,6 +1299,7 @@ a,
   z-index: 3;
 }
 
+/* Modales */
 .modal-ficha {
   position: absolute;
   inset: 0;
@@ -1282,8 +1308,9 @@ a,
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 14px;
+  padding: 16px;
   z-index: 20;
+  touch-action: none;
 }
 
 .modal-ficha.oculto {
@@ -1292,13 +1319,14 @@ a,
 
 .tarjeta-ficha {
   background: #fffdf9;
-  border: 3px solid var(--rosa-borde);
-  border-radius: 22px;
+  border: 3.5px solid var(--rosa-borde);
+  border-radius: 24px;
   width: 100%;
   max-height: 88%;
   overflow-y: auto;
+  touch-action: pan-y;
   overscroll-behavior: contain;
-  padding: 12px 14px;
+  padding: 14px 16px;
   text-align: left;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.22);
   user-select: text;
@@ -1310,12 +1338,12 @@ a,
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid var(--rosa-suave);
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   margin-bottom: 8px;
 }
 
 .encabezado-ficha h3 {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--texto-oscuro);
 }
 
@@ -1329,27 +1357,27 @@ a,
   background: var(--rosa-suave);
   border: 2px solid var(--texto-oscuro);
   color: var(--texto-oscuro);
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .contenido-ficha {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--texto-oscuro);
-  line-height: 1.4;
+  line-height: 1.45;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 }
 
 .bloque-ficha {
   background: var(--rosa-suave);
   border: 1.5px solid var(--rosa-borde);
-  border-radius: 12px;
-  padding: 7px 9px;
+  border-radius: 14px;
+  padding: 8px 10px;
 }
 
 .bloque-ficha ol {

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Gregorio</title>
   <link id="favicon-gregorio" rel="icon" type="image/png" href="assets/images/Gregorio%20feliz.png">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -241,7 +241,7 @@
         </div>
       </div>
 
-      <audio id="mi-audio-gregorio" preload="auto"></audio>
+      <audio id="mi-audio-gregorio" preload="none"></audio>
 
       <button type="button" class="btn-volver-unico" onclick="irA('pantalla-menu')">
         ⬅ Volver
@@ -397,7 +397,7 @@
     </section>
 
     <!-- Reproductor para narraciones y recomendaciones -->
-    <audio id="audio-narracion-gregorio" preload="auto" playsinline></audio>
+    <audio id="audio-narracion-gregorio" preload="none"></audio>
 
     <!-- MODAL DE MEDIACIÓN PARA ADULTOS -->
     <div id="modal-mediacion-adultos" class="modal-ficha oculto" onclick="cerrarModalMediacion(event)">
@@ -418,8 +418,11 @@
           </div>
         </div>
         <div class="contenido-ficha">
-          <p id="texto-mediacion-guion">
-            Para usar esta aplicación necesitas la ayuda de un adulto. Puedes buscar a tu papá, a tu mamá o a alguna de tus profesoras. ¡Los científicos también necesitamos ayudantes!
+          <p>
+            Busca a tu papá, mamá o profesora para acompañar la actividad; ¡los científicos también tienen ayudantes!
+          </p>
+          <p>
+            El botón de parlante (🔊) reproduce la voz de Gregorio.
           </p>
         </div>
       </div>
